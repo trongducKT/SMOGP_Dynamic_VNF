@@ -10,18 +10,19 @@ class Node:
         return hash(self.name)
 
     def __init__(self, name, type, delay = 0.0, capacity = None,cost = None, used=None, VNFs=None):
+       # print("Khoi tao node")
         self.name = name                # name Node
         self.type = type                # type Node (1:switch node; 2:MDC node)
         self.cap = capacity             # capacity of Node {type=1: memory_capacity, type=2: cpu_capacity, type=3: ram_capacity} 
             # format
             # capacity = {
-            #     "mem_cap": 0.0,
+            #     "memory_cap": 0.0,
             #     "cpu_cap": 0.0,
-            #     "ram_capa": 0.0
+            #     "ram_cap": 0.0
             # }
         self.delay  = delay             # delay of server
         if used == None:
-            self.used ={
+            self.used = {
                 0: {
                     "mem_used": 0.0,
                     "cpu_used": 0.0,
@@ -80,6 +81,7 @@ class Node:
         
     # add used memory, cpu and ram of request at slot time T
     def add_used(self, start_time_slot, end_time_slot, used_res):
+        #print("add_used_node")
         for T in range(start_time_slot, end_time_slot):
             if T in self.used:
                 self.used[T]["mem_used"] += used_res["mem_used"]
@@ -90,13 +92,78 @@ class Node:
                 self.used[T]["mem_used"] = used_res["mem_used"]
                 self.used[T]["cpu_used"] = used_res["cpu_used"]
                 self.used[T]["ram_used"] = used_res["ram_used"]            
-
+    
+    # check remain resource of server at time slot T
+    def check_resource_T(self, T):
+        #print("Check resource")
+        if T not in self.used:
+            return {
+                "remain_cpu": self.cap["cpu_cap"],
+                "remain_mem": self.cap["memory_cap"],
+                "remain_ram": self.cap["ram_cap"]
+            }
+        else:
+            return {
+                "remain_cpu": self.cap["cpu_cap"] - self.used[T]["cpu_used"],
+                "remain_mem": self.cap["memory_cap"] - self.used[T]["mem_used"],
+                "remain_ram": self.cap["ram_cap"] - self.used[T]["ram_used"]
+            }
+    
+    # The state of server from T1 to T2(not include T2)
+    def get_state_server(self, T1, T2):
+        #print("get_state_server")
+        used = {
+            "cpu": 0.0,
+            "mem": 0.0,
+            "ram": 0.0
+        }
+        for T in range(T1, T2):
+            if T in self.used:
+                used["cpu"] = max (used["cpu"], self.used[T]["cpu_used"])
+                used["mem"] = max (used["mem"], self.used[T]["mem_used"])
+                used["ram"] = max (used["ram"], self.used[T]["ram_used"])
+        return {
+            "cpu": self.cap["cpu_cap"] - used["cpu"],
+            "ram": self.cap["ram_cap"] - used["ram"],
+            "mem": self.cap["memory_cap"] - used["mem"]
+        }
+        
+    def get_MRU(self, T1, T2):
+        #print("get_MRU")
+        used = {
+                "cpu": 0.0,
+                "mem": 0.0,
+                "ram": 0.0
+            }
+        for T in range(T1, T2):
+            if T in self.used:
+                used["cpu"] = max (used["cpu"], self.used[T]["cpu_used"])
+                used["mem"] = max (used["mem"], self.used[T]["mem_used"])
+                used["ram"] = max (used["ram"], self.used[T]["ram_used"])
+        return{
+            "cpu": used["cpu"]/self.cap["cpu_cap"],
+            "mem": used["mem"]/self.cap["memory_cap"],
+            "ram": used["ram"]/self.cap["ram_cap"]
+        }
+    
+    # The cost of vnf in server
+    def get_cost(self, VNF):
+        #print("get_cost")
+        return VNF.c_f*self.cost["cost_c"]+ VNF.r_f*self.cost["cost_r"] + VNF.h_f*self.cost["cost_h"]
+    
+    def get_conflict(self, T):
+        if T not in self.used:
+            return False
+        else:
+            return self.used[T]["cpu_used"] > self.cap["cpu_cap"] or self.used[T]["mem_used"] > self.cap["memory_cap"] or self.used[T]["ram_used"] > self.cap["ram_cap"]
+    
 
 class Link:
     def __hash__(self):
         return hash((self.u.name, self.v.name))
 
     def __init__(self, u, v, bandwidth_capacity,link_delay, used=None):
+        #print("Khoi tao link")
         self.u = u  # first node
         self.v = v  # second node
         self.cap = bandwidth_capacity
@@ -122,13 +189,44 @@ class Link:
         self.used += bandwidth
     
     def add_used(self, start_time_slot, end_time_slot, used_bandwidth):
+        #print("add_used_link")
         for T in range (start_time_slot, end_time_slot):
             if T in self.used:
                 self.used[T] += used_bandwidth
             else:
                 self.used[T] = used_bandwidth
 
-
+    # bandwith of link that is provide from T1 to T2 (not include T2)
+    def get_bandwidth_to(self, T1, T2):
+        #print("get_bandwidth_to")
+        bandwidth = 0
+        used = 0
+        for T in range(T1, T2):
+            if T in self.used:
+                used = max(used, self.used[T])
+        bandwidth = self.cap - used
+        return bandwidth
+    
+    def get_MLU(self, T1, T2):
+        #print("get_MLU")
+        temp = -np.inf
+        for T in range(T1, T2):
+            if T in self.used:
+                temp = max(temp, self.used[T]/self.cap)
+        return temp
+    def get_state_link(self, T): # T is time slot
+        #print("get_state_link")
+        if T not in self.used:
+            return self.cap
+        else:
+            return self.cap - self.used[T]
+        
+    def check_conflict(self, T):
+        if T not in self.used:
+            return False
+        else:
+            return self.used[T] > self.cap
+    
 class Network:
     def __init__(self, VNF_costs=None):
         self._max_cpu = None
@@ -145,17 +243,23 @@ class Network:
 
     # add a switch node to network
     def add_switch_node(self, name):
+        #print("add_switch_node")
         node = Node(name, 1)
         self.nodes[name] = node
 
     # list of MDC nodes
     @property
     def MDC_nodes(self):
+        #print("MDC_nodes")
         return [node for node in self.nodes.values() if node.type == 2]
 
+    @property
+    def get_node(self):
+        return [node for node in self.nodes.values()]
     # add a MDC node to network
-    def add_MDC_node(self, name, delay, capacity,used = None, VNFs=None, cost = None):
-        node = Node(name, 2, delay, capacity, used, VNFs, cost)
+    def add_MDC_node(self, name, delay, capacity, cost = None, used= None, VNFs=None):
+       # print(type(used))
+        node = Node(name, 2, delay, capacity, cost, used, VNFs)
         self.nodes[name] = node
 
     # add a connection
@@ -166,7 +270,25 @@ class Network:
         self.links.append(link)
         link.u.links.append(link)
         link.v.links.append(link)
-        
+    
+    def add_node_to_network(self, node_list):
+        for node in node_list:
+            if node.type == 1:
+                self.add_switch_node(node.name)
+            else:
+                self.add_MDC_node(node.name, node.delay, node.cap, node.cost, node.used,node.VNFs)   
+    
+    def add_link_to_network(self, link_list):
+        for link in link_list:
+            self.add_link(link.u, link.v,link.cap, link.link_delay)
+            
+    
+    def get_conflict_link(self, T):
+        return sum([link.check_conflict(T) for link in self.links])
+    
+    def get_conflict_server(self, T):
+        return sum([node.get_conflict(T) for node in self.MDC_nodes])
+                   
     
     def violated_bandwidth(self):
         return sum([link.violated() for link in self.links])
@@ -212,7 +334,7 @@ class Network:
     def to_graph(self):
         G = nx.Graph()
         for node in self.nodes.values():
-            G.add_node(node.name, type=node.type, cap=node.cap, used=node.used, VNFs=node.VNFs)
+            G.add_node(node.name, type=node.type, cap=node.cap, used=node.used, VNFs=node.VNFs, links = node.links)
         for link in self.links:
             G.add_edge(link.u.name, link.v.name, cap=link.cap, used=link.used)
         return G
@@ -252,32 +374,5 @@ class Network:
             nx.draw_networkx_edge_labels(G, pos_nodes, edge_labels=edge_attrs, font_size=5)
         if out_path is not None:
             plt.savefig(out_path)
-        plt.show()
-    
-    def read_data(self, path_link ):    
-        with open(path_link) as file:
-            data = json.load(file)    
-        for node, value in data["V"].items():
-            node = int(node)
-            if value["server"] == True:
-                capacity = {
-                    "memory_capacity": value["h_v"],
-                    "cpu_capacity": value["c_v"],
-                    "ram_capacity": value["r_v"]
-                }
-                cost = {
-                    "cost_c" : value["cost_c"],
-                    "cost_r":   value["cost_r"],
-                    "cost_h":  value["cost_h"]
-                }
-                self.add_MDC_node(node, value["d_v"], capacity, cost = cost)
-            else:
-                self.add_switch_node(node)
-                
-        for link in data["E"]:
-            self.add_link(link["u"], link["v"],link["b_l"], link["d_l"])
-        # self.visualize(info=False, topo=True)
-
-# network = Network()
-# network.read_data(r'C:\Users\Admin\Documents\LAB\Virtural network\GP_Code\data\input\conus_urban_easy.json')
+        plt.show()    
 

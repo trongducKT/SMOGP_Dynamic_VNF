@@ -1,505 +1,305 @@
-# import functools
-# from utils import Solution
-# import networkx as nx
-# from network import Network
-# from requests import SFC, Request
-# from heapq import heappush, heappop
-# from itertools import count
-# import numpy as np 
-# import time
-# from copy import deepcopy
-# EPS = 1e-3
-
-# class Graph:
-#     def __init__(self, network: Network):
-#         self.network = network
-#         self.G = nx.DiGraph()
-#         self.build()
-#     def build(self):
-#         for node in self.network.nodes.values():
-#             name = node.name
-#             self.G.add_node(name)
-            
-#         for link in self.network.links:
-
-#             u = link.u.name
-#             v = link.v.name
-#             if u not in self.G.nodes or v not in self.G.nodes:
-#                 continue
-#             self.G.add_edge(u, v,
-#                             weight=(link.cap / (link.cap - link.used+0.0001) + self.G.nodes[v]['weight']))
-#             self.G.add_edge(v, u,
-#                             weight=(link.cap / (link.cap - link.used+0.0001) + self.G.nodes[u]['weight']))
-#     def k_shortest_paths(self, source, target, k=1, weight='weight'):
-
-#         if source == target:
-#             return ([[source]]) 
-        
-#         length, path = nx.single_source_dijkstra(self.G, source, weight=weight)
-#         # if target not in length:
-#         #     raise nx.NetworkXNoPath("node %s not reachable from %s" % (source, target))
-#         # print(length)
-#         lengths = [length[target]]
-#         paths = [path[target]]
-#         c = count()        
-#         B = []                        
-#         G_original = self.G.copy()    
-        
-#         for i in range(1, k):
-#             for j in range(len(paths[-1]) - 1):            
-#                 spur_node = paths[-1][j]
-#                 root_path = paths[-1][:j + 1]
-                
-#                 edges_removed = []
-#                 for c_path in paths:
-#                     if len(c_path) > j and root_path == c_path[:j + 1]:
-#                         u = c_path[j]
-#                         v = c_path[j + 1]
-#                         if self.G.has_edge(u, v):
-#                             edge_attr = self.G.adj[u][v]
-#                             self.G.remove_edge(u, v)
-#                             edges_removed.append((u, v, edge_attr))
-                
-#                 for n in range(len(root_path) - 1):
-#                     node = root_path[n]
-#                     # out-edges
-#                     for u, v, edge_attr in list(self.G.edges(node, data=True)):
-#                         self.G.remove_edge(u, v)
-#                         edges_removed.append((u, v, edge_attr))
-                    
-#                     if self.G.is_directed():
-#                         # in-edges
-#                         for u, v, edge_attr in list(self.G.in_edges(node, data=True)):
-#                             self.G.remove_edge(u, v)
-#                             edges_removed.append((u, v, edge_attr))
-                
-#                 spur_path_length, spur_path = nx.single_source_dijkstra(self.G, spur_node, weight=weight)            
-#                 if target in spur_path and spur_path[target]:
-#                     total_path = root_path[:-1] + spur_path[target]
-#                     total_path_length = self.get_path_length(G_original, root_path, weight) + spur_path_length[target]                
-#                     heappush(B, (total_path_length, next(c), total_path))
-                    
-#                 for e in edges_removed:
-#                     u, v, edge_attr = e
-#                     self.G.add_edge(u, v,weight =  edge_attr['weight'])
-                        
-#             if B:
-#                 (l, _, p) = heappop(B)        
-#                 lengths.append(l)
-#                 paths.append(p)
-#             else:
-#                 break
-        
-#         return paths
-
-#     def get_path_length(self,G, path, weight='weight'):
-#         length = 0
-#         if len(path) > 1:
-#             for i in range(len(path) - 1):
-#                 u = path[i]
-#                 v = path[i + 1]
-                
-#                 length += G.adj[u][v].get(weight, 1)
-        
-#         return length  
-#     def path_pair(self, path):
-#         paths = []
-#         route_links = []
-#         paths.append(self.network.nodes[path[0]])
-#         for i in range(1, len(path)):
-#             name  = path[i]
-#             pname = path[i - 1]
-#             u = self.network.nodes[pname]
-#             next_link = None
-#             for link in u.links:
-#                 v = link.u if link.v == u else link.v
-#                 if v.name == name:
-#                     next_link = link
-#                     break
-#             paths.append(self.network.nodes[name])
-#             route_links.append(next_link)
-#         return paths,route_links
-
-#     def find_SFCs(self,start,end, k=10):
-#         paths = self.k_shortest_paths(str(start),str(end),k)
-#         return [self.path_pair(path) if path is not None else None for path in paths]
-# class MultiLayerGraph:
-#     def __init__(self, network: Network):
-#         self.network = network
-#         self.G = nx.DiGraph()
-#         self.build()
-#     def build(self):
-#         for node in self.network.nodes.values():
-#             name = node.name
-#             self.G.add_node(name,
-#                             weight=(node.cap / (node.cap - node.used + 0.0001)
-#                                     if node.type == 1 else 0.0))
-#         for link in self.network.links:
-
-#             u = link.u.name
-#             v = link.v.name
-#             if u not in self.G.nodes or v not in self.G.nodes:
-#                 continue
-#             self.G.add_edge(u, v,
-#                             weight=(link.cap / (link.cap - link.used+0.0001) + self.G.nodes[v]['weight']))
-#             self.G.add_edge(v, u,
-#                             weight=(link.cap / (link.cap - link.used+0.0001) + self.G.nodes[u]['weight']))
-
-
-#     def k_dijkstra(self,start,end, k=10):
-#         if k == 1:
-#             try:
-#                 return [nx.shortest_path(self.G, start, end, weight='weight')]
-#             except:
-#                 return []
-#         X = nx.shortest_simple_paths(self.G, start, end, weight='weight')
-#         paths = []
-#         for counter, path in enumerate(X):
-#             paths.append(path)
-#             if counter == k - 1:
-#                 break
-#         return paths
-
-#     def path_pair(self, path):
-#         paths = []
-#         route_links = []
-#         paths.append(self.network.nodes[path[0]])
-#         for i in range(1, len(path)):
-#             name  = path[i]
-#             pname = path[i - 1]
-#             u = self.network.nodes[pname]
-#             next_link = None
-#             for link in u.links:
-#                 v = link.u if link.v == u else link.v
-#                 if v.name == name:
-#                     next_link = link
-#                     break
-#             paths.append(self.network.nodes[name])
-#             route_links.append(next_link)
-#         return paths,route_links
-
-#     def find_SFCs(self,start,end, k=10):
-#         paths = self.k_dijkstra(start,end,k)
-#         return [self.path_pair(path) if path is not None else None for path in paths]
-
-
-# class state: 
-#     def __init__(self,network,requests):
-#         self.network = network
-#         self.requests = requests
-#         self.next = None 
-#         self.curr = None
-#         self.path = None
-#         self.route_links = None
-#         self.cur_req = None
-#         self.H = None
-#         self.i = 0 
-#         self.path_k = None
-#     def update(self,path,route_links):    
-#         for node in path:
-#             if node.type == 1: 
-#                 node.use(self.cur_req.mem)
-#         for link in route_links:
-#             link.use(self.cur_req.bw)
-
-#     def reset(self,path,route_links,deployed_VNFs):
-#         for node in path:
-#             if node.type == 1:
-#                 if node.used ==0 and self.cur_req.mem !=0:
-#                     print("Wrong reset " +str((len(path))))
-#                 node.use(-self.cur_req.mem)
-#         for node in deployed_VNFs:
-#             if node.type ==  1: 
-#                 print("Wrong")
-#             node.use(-self.cur_req.cpu)
-#         for link in route_links:
-#             link.use(-self.cur_req.bw)
-            
-#     def Routing(self,inv: Individual,K: int):
-#         paths = []
-#         for r in self.requests:
-#             self.i +=1
-#             src = r.ingress
-#             dest = r.egress
-#             self.cur_req = r
-#             self.curr = self.network.nodes[src]
-#             if self.curr.violated(r.mem) or self.network.nodes[dest].violated(r.mem):
-#                 paths.append(None)
-#                 continue
-#             path = [self.curr]
-#             route_links = []
-#             served = True
-#             deployed_VNFs = []
-#             VNF_indices = []
-#             for i in r.VNFs:
-#                 vnf_node = []
-#                 for v in self.network.MDC_nodes:
-#                     if i in v.VNFs:
-#                         vnf_node.append(v)
-#                 self.path_k = self.getpaths(self.curr,vnf_node,K)
-#                 if self.path_k is None:
-#                     print(r)
-#                 # n = self.select(inv,vnf_node,K)
-#                 n = self.select_2(inv,vnf_node,self.path_k)
-#                 if n == None:
-#                     served = False
-#                     break
-#                 deployed_VNFs.append(n)
-#                 if n.name == self.curr.name:
-#                     VNF_indices.append(len(path)-1)
-#                     self.curr = n
-#                     n.use(self.cur_req.cpu)
-#                     continue
-#                 p,links = self.path_k[n.name]
-#                 # p,links = self.getpath(self.curr,n,K)
-#                 # for node in p:
-#                 #     if node.name == '19':
-#                 #         print(node.name)
-#                 if p == None:
-#                     print(self.curr.name)
-#                     print(n.name)
-#                 self.update(p,links)
-#                 p.pop(0)
-#                 path.extend(p)
-#                 VNF_indices.append(len(path)-1)
-#                 route_links.extend(links)
-#                 self.curr = n 
-#                 n.use(self.cur_req.cpu)
-#             p,links = self.getpath(self.curr,self.network.nodes[dest],K)
-#             if p == None or not served:
-#                 if len(path) != 1:
-#                     self.reset(path,route_links,deployed_VNFs)
-#                 paths.append(None)
-#                 continue
-#             self.update(p,links)
-#             p.pop(0)
-#             path.extend(p)
-#             route_links.extend(links)
-#             sfc = SFC(r)
-#             sfc.route_nodes = path 
-#             sfc.route_links = route_links
-#             sfc.VNF_indices = VNF_indices
-#             paths.append(sfc)
-#         return paths
-#     def select(self,inv,vnf_node,K):
-#         next = None
-#         first = True
-#         pitority = float('-inf')
-#         for v in vnf_node:
-#             if v.violated(self.cur_req.cpu):
-#                 continue
-#             self.path,self.route_links = self.getpath(self.curr,v,K)
-
-#             if self.path == None:
-#                 continue
-#             if(first):
-#                 next = v 
-#                 self.next = v
-#                 pitority = inv.chromosomes.GetOutput(self)
-#                 first = False
-#                 continue
-#             self.next = v
-#             tmp = inv.chromosomes.GetOutput(self)
-#             if(tmp > pitority):
-#                 next = v
-#                 pitority = tmp
-#         return next
-#     def select_2(self,inv,vnf_node,paths):
-#         next = None
-#         first = True
-#         pitority = float('-inf')
-#         for v in vnf_node:
-#             if v.violated(self.cur_req.cpu):
-#                 continue
-#             self.path,self.route_links = paths[v.name]
-#             if self.path == None:
-#                 continue
-#             if(first):
-#                 next = v 
-#                 self.next = v
-#                 pitority = inv.chromosomes.GetOutput(self)
-#                 first = False
-#                 continue
-#             self.next = v
-#             tmp = inv.chromosomes.GetOutput(self)
-#             if(tmp > pitority):
-#                 next = v
-#                 pitority = tmp
-#         return next
-#     def isValid(self,path,links):
-#         for node in path:
-#             if node.type == 1 and node.violated(self.cur_req.mem):
-#                 return False
-#         for link in links:
-#             if link.violated(self.cur_req.bw):
-#                 return False
-#         return True
-
-#     def getpath(self,u,v,k):
-#         mlgraph = MultiLayerGraph(self.network)
-#         # print(mlgraph.G.nodes)
-#         paths = mlgraph.find_SFCs(u.name,v.name,k)
-#         for path in paths: 
-#             if self.isValid(path[0],path[1]):
-#                 return path
-#         return None,None
-#     def getpaths(self,u,vnf_node,k):
-#         mlgraph = MultiLayerGraph(self.network)
-#         # mlgraph = Graph(self.network)
-#         # print(mlgraph.G.nodes)
-#         rs = {}
-#         for v in vnf_node:
-#             paths = mlgraph.find_SFCs(u.name,v.name,k)
-#             for path in paths: 
-#                 if self.isValid(path[0],path[1]):
-#                     rs[v.name] = path
-#                     break
-#             if v.name not in rs.keys():
-#                 rs[v.name] = None,None
-#         return rs
-    
-    
-# class simple_gp:
-#     def __init__(self,network,requests):
-#         self.network = network
-#         self.requests = requests
-    
-#     def undeploy(self, paths):
-#         for path in paths:
-#             if path != None:
-#                 path.undeploy()
-#     def evaluate(self, ind: Individual,K:int, alpha=0.01):
-#         s = state(self.network,self.requests)
-#         paths = s.Routing(ind,K) 
-#         MLU = max(self.network.max_used_bandwidth(),
-#                 self.network.max_used_cpu(),
-#                 self.network.max_used_memory())
-#         self.undeploy(paths)
-#         cnt = 0 
-#         for path in paths:
-#             if path != None:
-#                 cnt +=1
-#         return (1-alpha) * cnt/len(paths) - alpha * MLU
-    
-#     def run_GP(self,K,pop_size=100, max_gen=50, crossover_rate=0.8, mutation_rate=0.05, alpha=0.01):
-#         functions = [AddNode(),SubNode(),MulNode(),DivNode(),MaxNode(),MinNode()]
-#         terminals = [NHNode(),BRNode(),TBRNode(),ERCNode(),CPUNode()]
-#         min_height = 2
-#         max_height = 8
-#         initialization_max_tree_height = 4
-#         pop = Population(pop_size, functions,terminals,min_height,max_height,initialization_max_tree_height,functools.partial(self.evaluate, K= K,alpha=alpha))
-#         ind =  pop.run(max_gen, crossover_rate, mutation_rate)
-#         return ind,pop.history
-    
-# def gp_x(network: Network, requests: list,K: int, alpha=0.01):
-#     # First phase: find K potential paths for each request
-#     network_tmp = deepcopy(network)
-#     algorithm = simple_gp(network_tmp,requests)
-#     start = time.process_time()
-#     ind,hist = algorithm.run_GP(K)
-#     end = time.process_time()
-#     s = state(network_tmp,requests)
-#     paths = s.Routing(ind,K)     
-#     f1 = 0 
-#     f2 = (network_tmp.max_used_bandwidth() + network_tmp.max_used_memory()+ network_tmp.max_used_cpu()) /3 
-#     for path in paths:
-#         if path is not None:
-#             f1+=1
-#             path.undeploy()
-#     return Solution(network, paths),hist,end-start,(1-f1/len(requests),f2)
-
-# class complex_gp:
-#     def __init__(self,train):
-#         self.train = train
-    
-#     def undeploy(self, paths):
-#         for path in paths:
-#             if path != None:
-#                 path.undeploy()
-#     def evaluate(self, ind: Individual,K:int, alpha=0.01):
-#         fitness = 0 
-#         for instance in self.train:
-#             name,network,requests = instance
-#             s = state(network,requests)
-#             paths = s.Routing(ind,K) 
-#             MLU = max(network.max_used_bandwidth(),
-#                     network.max_used_cpu(),
-#                     network.max_used_memory())
-#             self.undeploy(paths)
-#             cnt = 0 
-#             for path in paths:
-#                 if path != None:
-#                     cnt +=1
-#             fitness += (1-alpha) * cnt /len(requests) - alpha * MLU
-#         return fitness/len(self.train)
-#     def run_GP(self,K,pop_size=100, max_gen=50, crossover_rate=0.8, mutation_rate=0.05, alpha=0.01):
-#         functions = [AddNode(),SubNode(),MulNode(),DivNode(),MaxNode(),MinNode()]
-#         terminals = [NHNode(),BRNode(),TBRNode(),ERCNode(),CPUNode()]
-#         min_height = 2
-#         max_height = 8
-#         initialization_max_tree_height = 4
-#         pop = Population(pop_size, functions,terminals,min_height,max_height,initialization_max_tree_height,functools.partial(self.evaluate, K= K,alpha=alpha))
-#         ind =  pop.run(max_gen, crossover_rate, mutation_rate)
-#         return ind,pop.history
-# def gp_ml(train,test ,K: int, alpha=0.01):
-#     algorithm = complex_gp(train)
-#     start = time.process_time()
-#     ind,hist = algorithm.run_GP(K)
-#     end = time.process_time()
-#     results = []
-#     instance_list = []
-#     for instance in train: 
-#         name,network,requests = instance
-#         s = state(network,requests)
-#         paths = s.Routing(ind,K)     
-#         for path in paths:
-#             if path is not None:
-#                 path.undeploy()
-#         results.append(Solution(network, paths))
-#         instance_list.append(name)
-#     for instance in test:
-#         name,network,requests = instance
-#         s = state(network,requests)
-#         paths = s.Routing(ind,K)     
-#         for path in paths:
-#             if path is not None:
-#                 path.undeploy()
-#         results.append(Solution(network, paths))
-#         instance_list.append(name)
-#     return instance_list,results,hist,end-start
-
-    
-# if __name__ == '__main__':
-#     network = file_to_network('./data/network.txt')
-#     requests = file_to_requests('./data/requests.txt')[:20]
-#     sol = gp_x(network, requests)
-
 from gp.node.function import *
 from gp.node.terminal import *
 from gp.population.gp import *
 from read_data import *
-from decision_var import Decision
+from decision_var import Decision, Chosing
+from network.network import Network
+from utils import *
+import time
 
-terminal = [DDR(), BR(), RRS(), CRS(), MRS(), ARS(), CRS(), MRS(), MDR()]
-terminal2 = [RCSe(), RRSe(), RMSe(), MLU(), CS(), DS(), MUC(), MUM(), MUR()]
-function = [AddNode(), SubNode(), MulNode(), DivNode(), MaxNode(), MinNode()]        
-pop = Population(10, function, terminal, 3, 8, 8, 100)
-pop.random_init()
-print(pop.indivs[0].chromosomes.GetHumanExpression())
-data = Read_data(r'C:\Users\Admin\Documents\LAB\Virtural network\GP_Code\GP_Dynamic_VNF\data\input\cogent_centers_easy.json') 
+data = Read_data(r'C:\Users\Admin\Documents\LAB\Virtural network\GP_Code\GP_Dynamic_VNF\data\input\cogent_centers_hard.json') 
 request_list = data.get_R()
-r = request_list[0]
-print(r.VNFs)
-vnf_source = {
-    5:{
-        "cpu": 1,
-        "ram": 3,
-        "mem": 2
-    }
-}
-max_delay = {
-    5: 10
-}
-X = Decision(r, 1, vnf_source, max_delay)
-fitness = pop.indivs[0].chromosomes.GetOutput(X)
-print(fitness)
+vnf_list = data.get_F()
+node_list = data.get_V()
+link_list = data.get_E()
+
+network = Network()
+network.add_node_to_network(node_list)
+network.add_link_to_network(link_list)
+server_list = network.MDC_nodes
+node_list = network.get_node
+link_list = network.links
+
+max_delay = max_delay_vnf(server_list, vnf_list)
+get_max_cost_vnf(server_list, vnf_list)
+
+function = [AddNode(), SubNode(), MulNode(), DivNode(), MaxNode(), MinNode()]
+terminal_decision = [DDR(), BR(), RRS(), CRS(), MRS(), ARS(), CRS(), MRS(), MDR()]
+terminal_chosing = [RCSe(), RRSe(), RMSe(), MLU(), CS(), DS(), MUC(), MUM(), MUR()]        
+
+
+# pop = Population(10, function, terminal_chosing, 2, 8, 8, 100)
+# pop.random_init()
+# print(pop.indivs[0].chromosomes.GetHumanExpression())
+
+# r = request_list[0]
+
+# vnf_source = VNFs_resource_max(server_list, vnf_list, 0)
+# print(vnf_source)
+# X = Decision(r, 1, vnf_source, max_delay, vnf_list)
+# fitness = pop.indivs[0].chromosomes.GetOutput(X)
+# print(fitness)
+
+# print(server_list[0].get_cost(vnf_list[4]))
+
+def deploy(network: Network, request: Request, chosing_indi : Individual, vnf_list, node_list, link_list):
+    #print("deploy")
+    start_node = request.ingress
+    end_node = request.egress
+    bw = request.bw
+    T = request.arrival
+    request_cost = 0
+    delay = 0
+    update_deploy = []
+    for VNF in request.VNFs:
+        server_chosing = []
+        for server in vnf_list[VNF].d_f.keys():
+            server_node = server_find(node_list, server)
+            n = 0
+            path_delay = np.inf
+            while path_delay == None or (path_delay > int(T)+ n - T):
+                n = n+1
+                if n == 10:
+                    break
+                path_delay, path = dijkstra(network, start_node, server, bw, int(T), int(T) + n, node_list )
+            if n == 10:
+                continue
+            time_to_server = T + path_delay
+            finished_server = vnf_list[VNF].d_f[server] + server_node.delay
+            T1, T2 = get_time_slot(time_to_server, finished_server)
+            state_server = server_node.get_state_server(T1, T2)
+            if (state_server["cpu"] < vnf_list[VNF].c_f) or (state_server["mem"] < vnf_list[VNF].h_f) or (state_server["ram"]< vnf_list[VNF].r_f) or (time_to_server + finished_server > request.lifetime):
+                 server_chosing.append((server, -np.inf , path,time_to_server+finished_server, np.inf))
+            else:
+                T3 = int(T)
+                T4 = int(T) + n
+                X = Chosing(server_node, T1, T2, path, path_delay, T3, T4, vnf_list[VNF], link_list)
+                value_of_gp = chosing_indi.chromosomes.GetOutput(X)
+                cost = server_node.get_cost(vnf_list[VNF])
+                server_chosing.append((server, value_of_gp, path, time_to_server + finished_server, cost, T1, T2, T3, T4))
+        server_chosing_sorted = sorted(server_chosing, key = lambda x: x[1], reverse = True)
+        if len(server_chosing_sorted) == 0 or server_chosing_sorted[0][1] == -np.inf:
+            return False, False
+        else:
+            request_cost = request_cost + server_chosing_sorted[0][4]
+            T = server_chosing_sorted[0][3]
+            used = {
+                "mem_used": vnf_list[VNF].h_f,
+                "cpu_used": vnf_list[VNF].c_f,
+                "ram_used": vnf_list[VNF].r_f
+            }
+            update_deploy.append((server_chosing_sorted[0][0], server_chosing_sorted[0][5], server_chosing_sorted[0][6], used, server_chosing_sorted[0][2], bw, server_chosing_sorted[0][7], server_chosing_sorted[0][8]))
+            start_node = server_chosing_sorted[0][0]
+    #start_time = time.time()
+    path_delay, path = dijkstra(network, start_node, end_node, bw, int(T), int(T) + n, node_list )
+    #print("Time to find path: ", time.time() - start_time)
+    n = 0
+    path_delay = np.inf
+    while path_delay == None or (path_delay > int(T)+n - T):
+        n = n+1
+        if n == 10:
+            break
+        path_delay, path = dijkstra(network, start_node, end_node, bw, int(T), int(T) + n, node_list )
+    if path_delay == None:
+        return False, False
+    else:
+        update_deploy.append((None, None, None, None, path, bw, int(T), int(T) + n))
+         
+    return update_deploy, request_cost
+            
+
+def decision_gp(decision_indi: Individual, request: Request, T, network, vnf_list):
+    #print("decision_gp")
+    server_list = network.MDC_nodes
+    vnf_resource = VNFs_resource_max(server_list, vnf_list, T)
+    max_delay = max_delay_vnf(server_list, vnf_list)
+    X = Decision(request, T, vnf_resource, max_delay, vnf_list)
+    result  = decision_indi.chromosomes.GetOutput(X)
+    del X
+    return result
+        
+
+
+def calFitness(alpha, decision_indi, chosing_indi, network, request_list, vnf_list, node_list):
+    #print("calFitness_decision")
+    start_time = time.time()
+    network_copy = deepcopy(network)
+    request_list_copy = deepcopy(request_list)
+    node_list_copy = deepcopy(node_list)
+    server_list = network_copy.MDC_nodes
+    link_list = network_copy.links
+    #print("Time to copy: ", time.time() - start_time)
+    sum_max_cost = get_max_cost_request(vnf_list, request_list_copy)
+    sum_request = len(request_list_copy)
+    T = 1
+    reject = 0
+    cost_sum = 0
+    start_time = time.time()
+    while len(request_list_copy) > 0:
+        request_processing, reject_request, reject1 = get_request_run(request_list_copy, 0, T)
+       # print(len(request_list_copy))
+        for request in request_processing:
+            request_list_copy.remove(request)
+       # print("Sau khi xoa", len(request_list_copy))
+        for request in reject_request:
+            request_list_copy.remove(request)
+       # print(len(request_processing), len(request_list_copy))
+        reject = reject+ reject1
+        request_decision = []
+        #start_time = time.time()
+       # print(len(request_processing))
+        for request in request_processing:
+            #start_time = time.time()
+            value_of_gp = decision_gp(decision_indi, request, T, network_copy, vnf_list)
+            #print("Time to find decision: ", time.time() - start_time)
+            request_decision.append((request, value_of_gp))
+        request_decision = sorted(request_decision, key = lambda x: x[1], reverse = True)
+        #print("Time to find decision: ", time.time() - start_time)
+        ####################################################
+        start_time = time.time()
+        #print(len(request_decision))
+        for re_de in request_decision:
+            start_time = time.time()
+            update_state, cost = deploy(network_copy, re_de[0], chosing_indi, vnf_list, node_list_copy, link_list)
+            #print("deploy:", time.time()-start_time)
+            # print(cost)
+            start_time = time.time()
+            if update_state == False:
+                re_de[0].arrival = re_de[0].arrival + 1
+                request_list_copy.append(re_de[0])
+            else:
+                cost_sum = cost_sum + cost
+                #print(update_state)
+                for update_item in update_state:
+                    if update_item[0] == None:
+                        update_link_state(link_list, update_item[4], update_item[5], update_item[6], update_item[7])
+                    else:
+                        server_node = server_find(server_list, update_item[0])
+                        #print("Update", update_item[0],update_item[1], update_item[2], update_item[3])
+                        #print(server_node.used)
+                        server_node.add_used(update_item[1], update_item[2], update_item[3])
+                        #print(server_node.used)
+                        update_link_state(link_list, update_item[4], update_item[5], update_item[6], update_item[7])
+           # print("Time to update: ", time.time() - start_time)
+            del update_state
+        #print("for:", time.time()-start_time)
+        #####################################################print("for:", time.time()-start_time)
+        del request_processing        
+        T = T + 1
+    # for T in range (50):
+    #     print(T)
+    #     print(network_copy.get_conflict_link(T))
+    #     print(network_copy.get_conflict_server(T))
+    # for link in network_copy.links:
+    #     print(link.u.name, link.v.name)
+    #     for T in range(50):
+    #         print(link.get_state_link(T))
+    #print("Time to deploy: ", time.time() - start_time)
+    # del network_copy
+    # del request_list_copy
+    # del node_list_copy 
+    # del server_list
+    # del vnf_list
+    # del link_list
+    return alpha*reject/sum_request + (1-alpha)*cost_sum/sum_max_cost, reject, cost_sum
+
+def trainGP(alpha, network, function, terminal_decision, terminal_chosing, node_list, link_list, vnf_list, request_list, pop_size, min_height, max_height, initialization_max_height,  evaluation, max_gen, crossover_rate, mutation_rate):
+    decision_pop = Population(pop_size, function, terminal_decision, min_height, max_height, initialization_max_height, evaluation)
+    chosing_pop = Population(pop_size, function, terminal_chosing, min_height, max_height, initialization_max_height, evaluation)
+    decision_pop.random_init()
+    chosing_pop.random_init()
+    decision_best = decision_pop.indivs[0]
+    chosing_best = chosing_pop.indivs[0]
+    
+    # decision_best.fitness, decision_best.reject, decision_best.cost = calFitness_decision(alpha, decision_best, chosing_best, network, request_list, vnf_list, node_list)
+    # chosing_best.fitness, chosing_best.reject, chosing_best.cost = calFitness_decision(alpha, decision_best, chosing_best, network, request_list, vnf_list, node_list)
+    #print("Xong khoi tao")
+    for indi in decision_pop.indivs:
+        indi.fitness, indi.reject, indi.cost = calFitness(alpha, indi, chosing_best, network, request_list, vnf_list, node_list) 
+        #print("Xong ca the indi_decision")
+    #print("Xong decision")        
+
+    
+    for indi in chosing_pop.indivs:
+        indi.fitness, indi.reject, indi.cost = calFitness(alpha, decision_best, indi, network, request_list, vnf_list, node_list)
+        #print("Xong ca the indi")
+    #print("Xong chosing")
+    for i in range(max_gen):
+        #print("The he: ", i)
+        start_time = time.time()
+        decision_offspring = decision_pop.reproduction(crossover_rate, mutation_rate)
+        #print("Time to reproduction: ", time.time() - start_time)
+        for indi in decision_offspring:
+            start_time = time.time()
+            indi.fitness, indi.reject, indi.cost = calFitness(alpha, indi, chosing_best, network, request_list, vnf_list, node_list)
+            #print(indi.chromosomes.GetHumanExpression())
+            #print("Time to cal fitness: ", time.time() - start_time)
+        chosing_offspring = chosing_pop.reproduction(crossover_rate, mutation_rate)
+        for indi in chosing_offspring:
+            indi.fitness, indi.reject, indi.cost = calFitness(alpha, decision_best, indi, network, request_list, vnf_list, node_list)
+            print(indi.chromosomes.GetHumanExpression())
+            print(indi.fitness, indi.reject, indi.cost)
+        decision_pop.indivs.extend(decision_offspring)
+        chosing_pop.indivs.extend(chosing_offspring)
+        
+        decision_pop.natural_selection()
+        chosing_pop.natural_selection()
+        print(decision_pop.indivs[-1].fitness, chosing_pop.indivs[-1].fitness)
+        if decision_pop.indivs[0].fitness > decision_best.fitness:
+            decision_best = decision_pop.indivs[0]
+        if chosing_pop.indivs[0].fitness > chosing_best.fitness:
+            chosing_best = chosing_pop.indivs[0]
+        print("The he: ", i)
+        print(decision_best.fitness, chosing_best.fitness)    
+    return decision_best, chosing_best
+        
+        
+    
+
+   
+# pop = Population(10, function, terminal_chosing, 2, 8, 4, 100)
+# pop.random_init()
+
+# pop1 = Population(10, function, terminal_decision, 2, 8, 4, 100)
+# pop1.random_init()
+
+# decision_indi = pop1.indivs[0]
+# chosing_indi = pop.indivs[0]
+
+# update_state, cost = deploy(network, request_list[3], pop.indivs[1], vnf_list, node_list, link_list)
+# print(update_state)
+# print(cost)
+
+# shortest_delay, path = dijkstra(network, 67, 17, 0.5, 1,3, node_list)
+# print(f"Shortest delay from 40 to 1 with bandwidth requirement 0: {shortest_delay}")
+# print(path)
+request_train = []
+request_test = []
+for request in request_list:
+    if request.arrival <= 20:
+        request_train.append(request)
+    else: 
+        request_test.append(request)
+# print("Result:")
+# print(len(request_train)) 
+# fitness, reject, cost_sum = calFitness_decision(0.5, decision_indi, chosing_indi, network, request_train, vnf_list, node_list)
+# print(fitness)
+# print(reject)
+# print(cost_sum)
+
+start_time = time.time()
+decision_best, chosing_best = trainGP(0.5, network, function, terminal_decision, terminal_chosing, node_list, link_list, vnf_list, request_train, 10, 2, 8, 4, 50, 10, 0.8, 0.1)
+print("Thoi gian train", time.time() - start_time)
+print(decision_best.fitness, chosing_best.fitness)
+print(decision_best.chromosomes.GetHumanExpression())
+print(chosing_best.chromosomes.GetHumanExpression())
+
+start_time = time.time()
+fitness, reject, cost = calFitness(0.5, decision_best, chosing_best, network, request_test, vnf_list, node_list)
+print("Thoi gian test", time.time() - start_time)
+print("Result: ")
+print(fitness, reject, cost)
+
+# update_deploy, cost = deploy(network, request_list[0], chosing_indi, vnf_list, node_list, link_list)
+# print(update_deploy)
+# print(cost)

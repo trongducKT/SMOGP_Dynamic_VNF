@@ -7,6 +7,8 @@ class Individual:
     def __init__(self, chromosomes, default_fitness=-float('inf')):
         self.fitness = default_fitness
         self.chromosomes = chromosomes
+        self.reject = 0
+        self.cost = np.inf
 
 class Population:
     def __init__(self, pop_size,functions,terminals,min_height,max_height,initialization_max_tree_height, evaluation):
@@ -20,6 +22,7 @@ class Population:
         self.indivs = []
         self.evaluation = evaluation
     def random_init(self):
+        #print("random init")
         curr_max_depth = self.min_height
         init_depth_interval = self.pop_size / (self.initialization_max_tree_height - self.min_height + 1)
         next_depth_interval = init_depth_interval
@@ -56,6 +59,7 @@ class Population:
         return n
 
     def mutation(self,individual, max_height=4, min_height=2 ):
+        #print("mutation")
         mutation_branch = self.GenerateRandomTree( self.functions, self.terminals, max_height, min_height=min_height )
         
         nodes = individual.GetSubtree()
@@ -77,7 +81,7 @@ class Population:
 
 
     def crossover(self, individual, donor ):
-	
+        #print("crossover")
 	# this version of crossover returns 1 child
         nodes1 = individual.GetSubtree()
         nodes2 = donor.GetSubtree()	# no need to deep copy all nodes of parent2
@@ -109,6 +113,7 @@ class Population:
         return candidates
 
     def reproduction(self, crossover_rate, mutation_rate):
+        #print("reproduction")
         O = []
         for i in range( self.pop_size ):
             o = deepcopy(self.indivs[i]).chromosomes
@@ -128,12 +133,13 @@ class Population:
                 ind = Individual(o,self.indivs[i].fitness)
             else:
                 ind = Individual(o)
-                ind.fitness = self.evaluation(ind)
+                #ind.fitness = self.evaluation(ind)
             O.append(ind)
         return O
 
     def natural_selection(self):
-        self.indivs.sort(key=lambda x: x.fitness, reverse=True)
+        #print("natural selection")
+        self.indivs.sort(key=lambda x: x.fitness, reverse=False)
         self.indivs = self.indivs[:self.pop_size]
 
     def run(self, max_gen=1000, crossover_rate=0.8, mutation_rate=0.05):

@@ -9,14 +9,23 @@ class VNF:
         # d_f :{
         #     name_server : time_boot
         # }
+        self.max_cost = 0
         
     def MDC_VNF(self):
         return [int(server) for server in self.d_f.keys()]
-    
 
-
-with open(r'C:\Users\Admin\Documents\LAB\Virtural network\GP_Code\data\input\cogent_urban_hard.json') as file:
-    data = json.load(file)
-    vnf = VNF(0, data["F"][0]["c_f"], data["F"][0]["r_f"], data["F"][0]["h_f"], data["F"][0]["d_f"])
+    def get_requested_resource(self):
+        return {
+            "cpu": self.c_f,
+            "memory": self.h_f,
+            "ram": self.r_f
+        }
+        
+    def get_requested_CPU(self):
+        return self.c_f
     
-    print(vnf.MDC_VNF())
+    def get_requested_RAM(self):
+        return self.r_f
+    
+    def get_requested_memory(self):
+        return self.h_f    
