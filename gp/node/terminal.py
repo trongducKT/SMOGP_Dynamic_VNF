@@ -1,6 +1,8 @@
 from .baseline import Node
 import numpy as np
 
+
+# Decision policy
 # Due date of request 
 class DDR(Node):
     def __init__(self):
@@ -117,6 +119,28 @@ class MDR(Node):
         for vnf in X.r.VNFs:
             temp += X.VNF_max_delay[vnf]
         return temp    
+    
+    
+class Rand(Node):
+    def __init__(self):
+        super(Rand, self).__init__()
+    def __repr__(self):
+        return "Rand"
+    def _GetHumanExpressionSpecificNode(self, args):
+        return "Rand"
+    def GetOutput(self, X):
+        return np.random.rand()
+    
+# push_back number of request
+class PN(Node):
+    def __init__(self):
+        super(PN, self).__init__()
+    def __repr__(self):
+        return "PN"
+    def _GetHumanExpressionSpecificNode(self, args):
+        return "PN"
+    def GetOutput(self, X):
+        return X.r.push_number
                  
 
 # Chosing server policy
@@ -197,7 +221,7 @@ class MUC(Node):
     def _GetHumanExpressionSpecificNode(self, args):
         return "MUC"
     def GetOutput(self, X):
-        return X.MRU["cpu"]
+        return 1-X.MRU["cpu"]
 
 # The max utilization of RAM in server
 class MUR(Node):
@@ -209,7 +233,7 @@ class MUR(Node):
     def _GetHumanExpressionSpecificNode(self, args):
         return "MUR"
     def GetOutput(self, X):
-        return X.MRU["ram"]
+        return 1-X.MRU["ram"]
         
 # The max utilization of Mem in server
 class MUM(Node):
@@ -221,5 +245,16 @@ class MUM(Node):
     def _GetHumanExpressionSpecificNode(self, args):
         return "MUM"
     def GetOutput(self, X):
-        return X.MRU["mem"]
+        return 1-X.MRU["mem"]
+    
+    
+class MinCost(Node):
+    def __init__(self):
+        super(MinCost, self).__init__()
+    def __repr__(self):
+        return "MinCost"
+    def _GetHumanExpressionSpecificNode(self, args):
+        return "MinCost"
+    def GetOutput(self, X):
+        return -X.cost
         

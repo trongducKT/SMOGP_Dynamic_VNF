@@ -28,15 +28,17 @@ class Chosing:
      def __init__(self, server, T1, T2, path, path_delay, T3, T4, VNF, link_list ):
         #print("Khoi tao bien chosing")
         self.server_state = server.get_state_server(T1,T2)
-        temp =0
+        temp = np.inf
         for i in range (len(path)-1):
             link = link_search(link_list, path[i], path[i+1])
             link_utilization = link.get_MLU(T3, T4)
-            temp += link_utilization
+            temp = min(temp, link_utilization)
         if len(path) == 1:
-            self.MLU = 0
+            self.MLU = 1
         else:
-            self.MLU = temp/(len(path)-1)
+            self.MLU = 1- temp/(len(path)-1)
+        if self.MLU == 0:
+            self.MLU = 0.0000001
         self.cost = server.get_cost(VNF)
         self.delay = path_delay + VNF.d_f[server.name] + server.delay
         self.MRU = server.get_MRU(T1,T2)

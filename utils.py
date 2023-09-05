@@ -71,12 +71,12 @@ def dijkstra(network , start, end, bandwidth_requirement, T1,T2, node_list):
         server_node = server_find(node_list, current_vertex)
         for link in server_node.links:
             neighbor = link.next(server_node).name
-            delay = link.link_delay
-            bandwidth = link.get_bandwidth_to(T1, T2)
+            link_in_net = link_search(network.links, current_vertex, neighbor)
+            bandwidth = link_in_net.get_bandwidth_to(T1, T2)
 
             if bandwidth < bandwidth_requirement:
                 continue
-            
+            delay = link.link_delay
             distance = current_distance + delay
 
             if distance < distances[neighbor]:
@@ -131,10 +131,7 @@ def get_request_run(request_list, reject, T):
                 reject += 1
                 request_reject.append(request)
     
-    # for request in request_processing:
-    #     request_list.remove(request)
-    # for request in request_reject:
-    #     request_list.remove(request)
+
             
     return request_processing, request_reject, reject
 
@@ -157,4 +154,13 @@ def get_max_cost_request(vnf_list, request_list):
             sum_max_cost += vnf_list[vnf].max_cost
     
     return sum_max_cost
+
+def checkChange(history):
+    if len(history) < 10:
+        return False
+    last = history[-1]
+    for value in history[-10:]:
+        if value != last:
+            return False
+    return True
             

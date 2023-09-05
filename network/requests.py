@@ -1,6 +1,7 @@
 
 class Request:
-    def __init__(self, arrival_time, lifetime, ingress, egress, VNFs: list, bandwidth=0):
+    def __init__(self, name, arrival_time, lifetime, ingress, egress, VNFs: list, bandwidth=0):
+        self.name = name
         # time
         self.arrival = arrival_time
         self.lifetime = lifetime
@@ -10,6 +11,8 @@ class Request:
         self.egress = egress # destination_node
         self.VNFs = VNFs
         self.bw = bandwidth
+        self.no_chosing = []
+        self.push_number = 1
 
 
 class SFC:

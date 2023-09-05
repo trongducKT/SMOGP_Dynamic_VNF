@@ -1,0 +1,13 @@
+,GP,Heuristic 1
+nsf_centers_hard,0.500659312,0.500659312
+nsf_rural_hard,0.404593987,0.404593987
+nsf_uniform_hard,0.38872956,0.414303226
+nsf_urban_hard,0.423928467,0.471371863
+conus_centers_hard,0.296369278,0.499723027
+conus_rural_hard,0.320231678,0.38567674
+conus_urban_hard,0.397635191,0.463934615
+conus_uniform_hard,0.377923446,0.439207659
+cogent_centers_hard,0.332477861,0.494999697
+cogent_rural_hard,0.368149742,0.439822888
+cogent_uniform_hard,0.342298735,0.440598299
+cogent_urban_hard,0.341588606,0.444521513

@@ -209,7 +209,9 @@ class Link:
     
     def get_MLU(self, T1, T2):
         #print("get_MLU")
-        temp = -np.inf
+        temp = 0
+        # print("T1, T2", T1, T2)
+        # print("cap", self.cap)
         for T in range(T1, T2):
             if T in self.used:
                 temp = max(temp, self.used[T]/self.cap)
@@ -298,38 +300,6 @@ class Network:
 
     def violated_cpu(self):
         return sum([node.violated() for node in self.MDC_nodes])
-
-    # @property
-    # def max_bandwidth(self):
-    #     if self._max_bandwidth is None:
-    #         self._max_bandwidth = max([link.cap for link in self.links])
-    #     return self._max_bandwidth
-
-    # @property
-    # def max_memory(self):
-    #     if self._max_memory is None:
-    #         self._max_memory = max([node.cap for node in self.switch_nodes])
-    #     return self._max_memory
-
-    # @property
-    # def max_cpu(self):
-    #     if self._max_cpu is None:
-    #         self._max_cpu = max([node.cap for node in self.MDC_nodes])
-    #     return self._max_cpu
-
-    # # Bandwidth usage level in link
-    # def max_used_bandwidth(self):
-    #     return max([link.used / link.cap for link in self.links])
-    # # Memory usage level in switch node
-    # def max_used_memory(self):
-    #     return max([node.used / node.cap for node in self.switch_nodes])
-    
-    # # CPU usage level in MDC node
-    # def max_used_cpu(self):
-    #     return max([node.used / node.cap for node in self.MDC_nodes])
-
-    # def validate(self):
-    #     return self.violated_bandwidth() + self.violated_cpu() + self.violated_memory() <= 1e-9
 
     def to_graph(self):
         G = nx.Graph()

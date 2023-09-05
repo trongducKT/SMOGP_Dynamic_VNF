@@ -57,6 +57,7 @@ class Read_data:
     
     def get_R(self):
         r_list = []
+        name = 0
         for r in self.data["R"]:
             T = r["T"] + 1
             st_r = r["st_r"]
@@ -64,6 +65,7 @@ class Read_data:
             F_r = r["F_r"]
             b_r = r["b_r"]
             d_max = int(r["d_max"])+T
-            request = Request(T, d_max, st_r, d_r, F_r, b_r)
+            request = Request(name, T, d_max, st_r, d_r, F_r, b_r)
             r_list.append(request)
+            name = name + 1
         return r_list
