@@ -6,7 +6,7 @@ if __name__ == '__main__':
 
 
     path = r'C:\Users\Admin\Documents\LAB\Virtural network\GP_Code\GP_Dynamic_VNF\data_1_9\nsf_centers_hard_s3.json'
-    fitness, rejected, cost = run_proposed(path, 4, 0.5, 10, 10, 2, 8, 4, 10, 20, 0.8, 0.1)
+    fitness, rejected, cost = run_proposed(path, 100, 0.5, 10, 50, 2, 8, 4, 10, 100, 0.8, 0.1 )
     #print(fitness, rejected, cost)
 
     fitness1, rejected1, cost1 = heuristic1(path, 0.5, 10)
