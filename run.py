@@ -253,7 +253,7 @@ def run_proposed(data_path, processing_num, alpha, num_train,  pop_size, min_hei
 
     decision_best, chosing_best= trainGP(processing_num, alpha, network, function, terminal_decision, terminal_chosing, vnf_list, request_train, pop_size, min_height, max_height, initialization_max_height, evaluation, max_gen, crossover_rate, mutation_rate)
 
-    fitness, reject, cost, proc = calFitness(alpha, decision_best, chosing_best, network, request_train, vnf_list)
+    fitness, reject, cost, proc = calFitness(alpha, decision_best, chosing_best, network, request_test, vnf_list)
 
     return fitness, reject, cost, proc
 
@@ -284,7 +284,7 @@ def heuristic1(data_path, alpha, num_train):
         else: 
             request_test.append(request)
 
-    fitness, reject, cost = calFitness(alpha, determining_indi, choosing_indi, network, request_train, vnf_list)
+    fitness, reject, cost = calFitness(alpha, determining_indi, choosing_indi, network, request_test, vnf_list)
 
     return fitness, reject, cost  
 
@@ -316,7 +316,7 @@ def heuristic2(data_path, alpha, num_train):
         else: 
             request_test.append(request)
 
-    fitness, reject, cost = calFitness(alpha, determining_indi, choosing_indi, network, request_train, vnf_list)
+    fitness, reject, cost = calFitness(alpha, determining_indi, choosing_indi, network, request_test, vnf_list)
 
     return fitness, reject, cost    
     
@@ -344,7 +344,7 @@ def heuristic3(data_path, alpha, num_train):
         else: 
             request_test.append(request)
 
-    fitness, reject, cost = calFitness(alpha, determining_indi, choosing_indi, network, request_train, vnf_list)
+    fitness, reject, cost = calFitness(alpha, determining_indi, choosing_indi, network, request_test, vnf_list)
 
     return fitness, reject, cost    
     
