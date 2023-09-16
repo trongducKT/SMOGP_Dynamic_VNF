@@ -23,6 +23,7 @@ def deploy(network: Network, request: Request, chosing_indi : Individual, vnf_li
     request_cost = 0
     
     update_deploy = []
+    sum_delay = 0
     
     for VNF in request.VNFs:
         server_chosing = []
@@ -68,6 +69,7 @@ def deploy(network: Network, request: Request, chosing_indi : Individual, vnf_li
         else:
             request_cost = request_cost + server_chosing_sorted[0][4]
             T = server_chosing_sorted[0][3]
+            sum_delay = T
             used = {
                 "mem_used": vnf_list[VNF].h_f,
                 "cpu_used": vnf_list[VNF].c_f,
@@ -92,8 +94,11 @@ def deploy(network: Network, request: Request, chosing_indi : Individual, vnf_li
         return False, False, False
     else:
         T3, T4 = get_time_slot(T, path_delay)
+        sum_delay = sum_delay + path_delay
         update_deploy.append((None, None, None, None, path, bw, T3, T4)) 
         hanhtrinh.extend(path)
+    if sum_delay >= request.lifetime:
+        return False, False, False
      
     return update_deploy, request_cost, hanhtrinh
 
