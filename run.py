@@ -117,6 +117,8 @@ def calFitness(alpha, decision_indi, chosing_indi, network, request_list, vnf_li
     request_list_copy = deepcopy(request_list)
     sum_max_cost = get_max_cost_request(vnf_list, request_list_copy)
     sum_request = len(request_list_copy)
+#     print("sum_max_cost",sum_max_cost)
+#     print("sum_request", sum_request)
     T = request_list_copy[0].arrival
     reject = 0
     cost_sum = 0
@@ -173,34 +175,33 @@ def trainGP(processing_number, alpha, network, function, terminal_decision, term
     arg = []
     for indi in decision_pop.indivs:
         arg.append((alpha, indi, chosing_best, network, request_list, vnf_list))
-    result = pool.starmap(calFitness, arg)
-    for indi, value in zip(decision_pop.indivs, result):
-        indi.fitness, indi.reject, indi.cost, a = value
-    print("Tinh fitness xong")   
-    arg = []
     for indi in chosing_pop.indivs:
         arg.append((alpha, decision_best, indi, network, request_list, vnf_list))
     result = pool.starmap(calFitness, arg)
-
-    for indi, value in zip(chosing_pop.indivs, result):
+    len_decision = len(decision_pop.indivs)
+    for indi, value in zip(decision_pop.indivs, result[0: len_decision]):
         indi.fitness, indi.reject, indi.cost, a = value
-        
+
+    for indi, value in zip(chosing_pop.indivs, result[len_decision:]):
+        indi.fitness, indi.reject, indi.cost, a = value
+    print("Tinh fitness khoi tạo xong")   
+
+    sum_gen = 0   
     for i in range(max_gen):
         decision_offspring = decision_pop.reproduction(crossover_rate, mutation_rate)
+        chosing_offspring = chosing_pop.reproduction(crossover_rate, mutation_rate)
         
+    
         arg = []
         for indi in decision_offspring:
             arg.append((alpha, indi, chosing_best, network, request_list, vnf_list))
-        result = pool.starmap(calFitness, arg)
-        for indi, value in zip(decision_offspring, result):
-            indi.fitness, indi.reject, indi.cost, a = value
-
-        chosing_offspring = chosing_pop.reproduction(crossover_rate, mutation_rate)
-        arg = []
         for indi in chosing_offspring:
             arg.append((alpha, decision_best, indi, network, request_list, vnf_list))
         result = pool.starmap(calFitness, arg)
-        for indi, value in zip(chosing_offspring, result):
+        len_decision_off = len(decision_offspring)
+        for indi, value in zip(decision_offspring, result[: len_decision_off]):
+            indi.fitness, indi.reject, indi.cost, a = value
+        for indi, value in zip(chosing_offspring, result[len_decision_off:]):
             indi.fitness, indi.reject, indi.cost, a = value
 
         decision_pop.indivs.extend(decision_offspring)
@@ -220,13 +221,14 @@ def trainGP(processing_number, alpha, network, function, terminal_decision, term
             
         decision_pop.history.append(decision_pop.indivs[0].fitness)
         chosing_pop.history.append(chosing_pop.indivs[0].fitness)
+        sum_gen = i+1
         print("The he ",i)
         print("Decision",decision_best.fitness)
         print("Chosing",chosing_best.fitness)
         if checkChange(decision_pop.history) == True and checkChange(chosing_pop.history) == True:
             break    
     pool.close()              
-    return decision_best, chosing_best  
+    return decision_best, chosing_best, sum_gen  
 
 
 # Proposed algorithm
@@ -256,11 +258,11 @@ def run_proposed(data_path, processing_num, alpha, num_train,  pop_size, min_hei
         else: 
             request_test.append(request)
 
-    decision_best, chosing_best= trainGP(processing_num, alpha, network, function, terminal_decision, terminal_chosing, vnf_list, request_train, pop_size, min_height, max_height, initialization_max_height, evaluation, max_gen, crossover_rate, mutation_rate)
+    decision_best, chosing_best, sum_gen= trainGP(processing_num, alpha, network, function, terminal_decision, terminal_chosing, vnf_list, request_train, pop_size, min_height, max_height, initialization_max_height, evaluation, max_gen, crossover_rate, mutation_rate)
 
     fitness, reject, cost, proc = calFitness(alpha, decision_best, chosing_best, network, request_test, vnf_list)
 
-    return fitness, reject, cost, proc
+    return fitness, reject, cost, proc, sum_gen
 
 
 
@@ -289,9 +291,9 @@ def heuristic1(data_path, alpha, num_train):
         else: 
             request_test.append(request)
 
-    fitness, reject, cost = calFitness(alpha, determining_indi, choosing_indi, network, request_test, vnf_list)
+    fitness, reject, cost, proc = calFitness(alpha, determining_indi, choosing_indi, network, request_test, vnf_list)
 
-    return fitness, reject, cost  
+    return fitness, reject, cost, proc  
 
 
 
@@ -321,9 +323,9 @@ def heuristic2(data_path, alpha, num_train):
         else: 
             request_test.append(request)
 
-    fitness, reject, cost = calFitness(alpha, determining_indi, choosing_indi, network, request_test, vnf_list)
+    fitness, reject, cost, proc = calFitness(alpha, determining_indi, choosing_indi, network, request_test, vnf_list)
 
-    return fitness, reject, cost    
+    return fitness, reject, cost, proc    
     
 # Heuristic 3: Due date for determining policy and min_cost for choosing policy
 def heuristic3(data_path, alpha, num_train):
@@ -349,7 +351,7 @@ def heuristic3(data_path, alpha, num_train):
         else: 
             request_test.append(request)
 
-    fitness, reject, cost = calFitness(alpha, determining_indi, choosing_indi, network, request_test, vnf_list)
+    fitness, reject, cost, proc = calFitness(alpha, determining_indi, choosing_indi, network, request_test, vnf_list)
 
-    return fitness, reject, cost    
+    return fitness, reject, cost, proc    
     
