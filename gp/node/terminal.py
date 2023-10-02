@@ -151,7 +151,28 @@ class PN(Node):
         return "PN"
     def GetOutput(self, X):
         return X.r.push_number
-                 
+
+class FIFO_DD(Node):
+    def __init__(self):
+        super(FIFO_DD, self).__init__()
+    def __repr__(self):
+        return "FIFO_DD"
+    def _GetHumanExpressionSpecificNode(self, args):
+        return "FIFO_DD"
+    def GetOutput(self, X):
+        temp = X.r.lifetime - X.T
+        rand = temp * np.random.uniform(0,1)
+        return -(temp + rand)
+    
+class MinDD(Node):
+    def __init__(self):
+        super(MinDD, self).__init__()
+    def __repr__(self):
+        return "MinDD"
+    def _GetHumanExpressionSpecificNode(self, args):
+        return "MinDD"
+    def GetOutput(self, X):
+        return -(X.r.lifetime-X.T)               
 
 # Chosing server policy
 
@@ -267,4 +288,27 @@ class MinCost(Node):
         return "MinCost"
     def GetOutput(self, X):
         return -X.cost
-        
+    
+class Relax(Node):
+    def __init__(self):
+        super(Relax, self).__init__()
+    def __repr__(self):
+        return "Relax"
+    def _GetHumanExpressionSpecificNode(self, args):
+        return "Relax"
+    def GetOutput(self, X):
+        temp = 1-X.MRU["mem"] + 1-X.MRU["ram"] + 1-X.MRU["cpu"]
+        temp = temp/3
+        return temp
+
+class  CS_Relax(Node):
+    def __init__(self):
+        super(CS_Relax, self).__init__()
+    def __repr__(self):
+        return "CS_Relax"
+    def _GetHumanExpressionSpecificNode(self, args):
+        return "CS_Relax"
+    def GetOutput(self, X):
+        temp = 1-X.MRU["mem"] + 1-X.MRU["ram"] + 1-X.MRU["cpu"]
+        temp = temp/3
+        return -X.cost/1000 + temp  
