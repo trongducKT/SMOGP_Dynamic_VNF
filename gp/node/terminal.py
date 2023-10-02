@@ -131,6 +131,16 @@ class Rand(Node):
     def GetOutput(self, X):
         return np.random.rand()
     
+class Const(Node):
+    def __init__(self):
+        super(Const, self).__init__()
+    def __repr__(self):
+        return "Const"
+    def _GetHumanExpressionSpecificNode(self, args):
+        return "Const"
+    def GetOutput(self, X):
+        return 1
+    
 # push_back number of request
 class PN(Node):
     def __init__(self):
