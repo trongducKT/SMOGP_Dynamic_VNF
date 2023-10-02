@@ -9,6 +9,7 @@ import time
 import multiprocessing     
 import csv
 import numba as nb
+import random
 
 
 # deploy a request
@@ -164,6 +165,10 @@ def calFitness(alpha, decision_indi, chosing_indi, network, request_list, vnf_li
     return alpha*reject/sum_request + (1-alpha)*cost_sum/sum_max_cost, reject, cost_sum, processing_history
 
 def trainGP(processing_number, alpha, network, function, terminal_decision, terminal_chosing, vnf_list, request_list, pop_size, min_height, max_height, initialization_max_height,  evaluation, max_gen, crossover_rate, mutation_rate):
+    fitness_history = {}
+    fitness_history["decision"] = []
+    fitness_history["chosing"] = []
+    time_start = time.time()
     decision_pop = Population(pop_size, function, terminal_decision, min_height, max_height, initialization_max_height, evaluation)
     chosing_pop = Population(pop_size, function, terminal_chosing, min_height, max_height, initialization_max_height, evaluation)
     decision_pop.random_init()
@@ -171,11 +176,16 @@ def trainGP(processing_number, alpha, network, function, terminal_decision, term
     decision_best = decision_pop.indivs[0]
     chosing_best = chosing_pop.indivs[0]
     print("Khoi tao xong")
+#     for indi in decision_pop.indivs:
+#         print(indi.chromosomes.GetHumanExpression())
+#     time.sleep(10)
     pool = multiprocessing.Pool(processes=processing_number)
     arg = []
     for indi in decision_pop.indivs:
+#         chosing_best_random = random.choice(chosing_pop.indivs)
         arg.append((alpha, indi, chosing_best, network, request_list, vnf_list))
     for indi in chosing_pop.indivs:
+#         decision_best_random = random.choice(decision_pop.indivs)
         arg.append((alpha, decision_best, indi, network, request_list, vnf_list))
     result = pool.starmap(calFitness, arg)
     len_decision = len(decision_pop.indivs)
@@ -194,8 +204,10 @@ def trainGP(processing_number, alpha, network, function, terminal_decision, term
     
         arg = []
         for indi in decision_offspring:
+#             chosing_best_random = random.choice(chosing_pop.indivs)
             arg.append((alpha, indi, chosing_best, network, request_list, vnf_list))
         for indi in chosing_offspring:
+#             decision_best_random = random.choice(decision_pop.indivs)
             arg.append((alpha, decision_best, indi, network, request_list, vnf_list))
         result = pool.starmap(calFitness, arg)
         len_decision_off = len(decision_offspring)
@@ -206,14 +218,17 @@ def trainGP(processing_number, alpha, network, function, terminal_decision, term
 
         decision_pop.indivs.extend(decision_offspring)
         chosing_pop.indivs.extend(chosing_offspring)
+#         print(len(decision_pop.indivs))
+#         time.sleep(10)
         
         decision_pop.natural_selection()
+#         print(len(decision_pop.indivs))
         chosing_pop.natural_selection()
         print("The he", i)
-        for indi in decision_pop.indivs:
-            print("Decision",indi.fitness)
-        for indi in chosing_pop.indivs:
-            print("Chosing",indi.fitness)        
+#         for indi in decision_pop.indivs:
+#             print("Decision",indi.fitness, indi.chromosomes.GetHumanExpression())
+#         for indi in chosing_pop.indivs:
+#             print("Chosing",indi.fitness, indi.chromosomes.GetHumanExpression())        
         if decision_pop.indivs[0].fitness < decision_best.fitness:
             decision_best = decision_pop.indivs[0]
         if chosing_pop.indivs[0].fitness < chosing_best.fitness:
@@ -225,10 +240,12 @@ def trainGP(processing_number, alpha, network, function, terminal_decision, term
         print("The he ",i)
         print("Decision",decision_best.fitness)
         print("Chosing",chosing_best.fitness)
+        fitness_history["decision"].append(decision_best.fitness)
+        fitness_history["chosing"].append(chosing_best.fitness)
         if checkChange(decision_pop.history) == True and checkChange(chosing_pop.history) == True:
             break    
     pool.close()              
-    return decision_best, chosing_best, sum_gen  
+    return decision_best, chosing_best, sum_gen, decision_best.fitness, time.time()-time_start, fitness_history  
 
 
 # Proposed algorithm
@@ -247,8 +264,8 @@ def run_proposed(data_path, processing_num, alpha, num_train,  pop_size, min_hei
     get_max_cost_vnf(network.MDC_nodes, vnf_list)
 
     function = [AddNode(), SubNode(), MulNode(), DivNode(), MaxNode(), MinNode()]
-    terminal_decision = [DDR(), BR(), RRS(), CRS(), MRS(), ARS(), CRS(), MRS(), MDR(), PN()]
-    terminal_chosing = [RCSe(), RRSe(), RMSe(), MLU(), CS(), DS(), MUC(), MUM(), MUR()]
+    terminal_decision = [DDR(), BR(), RRS(), CRS(), MRS(), ARS(), CRS(), MRS(), MDR(), PN(), Const()]
+    terminal_chosing = [RCSe(), RRSe(), RMSe(), MLU(), CS(), DS(), MUC(), MUM(), MUR(), Const()]
         
     request_train = []
     request_test = []
@@ -258,11 +275,11 @@ def run_proposed(data_path, processing_num, alpha, num_train,  pop_size, min_hei
         else: 
             request_test.append(request)
 
-    decision_best, chosing_best, sum_gen= trainGP(processing_num, alpha, network, function, terminal_decision, terminal_chosing, vnf_list, request_train, pop_size, min_height, max_height, initialization_max_height, evaluation, max_gen, crossover_rate, mutation_rate)
+    decision_best, chosing_best, sum_gen, fitness_train, time_train, fitness_history = trainGP(processing_num, alpha, network, function, terminal_decision, terminal_chosing, vnf_list, request_train, pop_size, min_height, max_height, initialization_max_height, evaluation, max_gen, crossover_rate, mutation_rate)
 
     fitness, reject, cost, proc = calFitness(alpha, decision_best, chosing_best, network, request_test, vnf_list)
 
-    return fitness, reject, cost, proc, sum_gen
+    return fitness, reject, cost, proc, sum_gen, fitness_train, time_train, fitness_history
 
 
 
