@@ -285,7 +285,7 @@ def run_proposed(data_path, processing_num, alpha, num_train,  pop_size, min_hei
 
     get_max_cost_vnf(network.MDC_nodes, vnf_list)
 
-    function = [AddNode(), SubNode(), MulNode(), DivNode(), MaxNode(), MinNode()]
+    function = [AddNode(), SubNode(), MulNode(), DivNode(), MaxNode(), MinNode(), SinNode(), CosNode(), PowNode()]
     terminal_decision = [DDR(), BR(), RRS(), CRS(), MRS(), ARS(), CRS(), MRS(), MDR(), PN(), Const()]
     terminal_chosing = [RCSe(), RRSe(), RMSe(), MLU(), CS(), DS(), MUC(), MUM(), MUR(), Const()]
         

@@ -129,8 +129,13 @@ class PowNode(Node):
 
 	def GetOutput( self, X ):
 		X0 = self._children[0].GetOutput( X )
+<<<<<<< HEAD
         X1 = self._children[1].GetOutput( X )
 		return np.power(X0, X1)
+=======
+		X1 = self._children[1].GetOutput( X )
+		return np.power(X0, 2)
+>>>>>>> fac65a3285ed64b1add1a2fe8f043050cdbfbe6f
 
 	
 class ExpNode(Node):
