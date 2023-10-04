@@ -169,12 +169,34 @@ def trainGP(processing_number, alpha, network, function, terminal_decision, term
     fitness_history["decision"] = []
     fitness_history["chosing"] = []
     time_start = time.time()
-    decision_pop = Population(pop_size, function, terminal_decision, min_height, max_height, initialization_max_height, evaluation)
-    chosing_pop = Population(pop_size, function, terminal_chosing, min_height, max_height, initialization_max_height, evaluation)
+    
+    decision_pop = Population(pop_size -1, function, terminal_decision, min_height, max_height, initialization_max_height, evaluation)
+    chosing_pop = Population(pop_size -1, function, terminal_chosing, min_height, max_height, initialization_max_height, evaluation)
+    
     decision_pop.random_init()
     chosing_pop.random_init()
-    decision_best = decision_pop.indivs[0]
-    chosing_best = chosing_pop.indivs[0]
+    
+    
+    node1 = MinDD()
+    node2 = Scale()
+    node3 = MinCost()
+    node4 = Scale()
+    func1 = AddNode()
+    func2 = AddNode()
+    
+    func1.AppendChild(node1)
+    func1.AppendChild(node2)
+    func2.AppendChild(node3)
+    func2.AppendChild(node4) 
+    indi1 = Individual(func1)
+    indi2 = Individual(func2)  
+    decision_pop.indivs.append(indi1)
+    chosing_pop.indivs.append(indi2)
+    
+    decision_best = decision_pop.indivs[pop_size -1]
+    chosing_best = chosing_pop.indivs[pop_size -1]
+    
+    
     print("Khoi tao xong")
 #     for indi in decision_pop.indivs:
 #         print(indi.chromosomes.GetHumanExpression())

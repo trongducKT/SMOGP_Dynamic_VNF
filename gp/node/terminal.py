@@ -311,4 +311,15 @@ class  CS_Relax(Node):
     def GetOutput(self, X):
         temp = 1-X.MRU["mem"] + 1-X.MRU["ram"] + 1-X.MRU["cpu"]
         temp = temp/3
-        return -X.cost/1000 + temp  
+        return -X.cost/1000 + temp 
+
+class Scale(Node):
+    def __init__(self):
+        super(Scale, self).__init__()
+    def __repr__(self):
+        return "Scale"
+    def _GetHumanExpressionSpecificNode(self, args):
+        return "Scale"
+    def GetOutput(self, X):
+        return 1 
+    
