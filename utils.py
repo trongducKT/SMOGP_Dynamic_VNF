@@ -156,7 +156,7 @@ def get_max_cost_request(vnf_list, request_list):
     return sum_max_cost
 
 def checkChange(history):
-    if len(history) < 20:
+    if len(history) < 10:
         return False
     last = history[-1]
     for value in history[-10:]:

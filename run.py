@@ -193,8 +193,8 @@ def trainGP(processing_number, alpha, network, function, terminal_decision, term
     decision_pop.indivs.append(indi1)
     chosing_pop.indivs.append(indi2)
     
-    decision_best = decision_pop.indivs[pop_size -1]
-    chosing_best = chosing_pop.indivs[pop_size -1]
+    decision_best = decision_pop.indivs[0]
+    chosing_best = chosing_pop.indivs[0]
     
     
     print("Khoi tao xong")
