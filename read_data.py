@@ -65,7 +65,7 @@ class Read_data:
             F_r = r["F_r"]
             b_r = r["b_r"]
             d_max = int(r["d_max"])+T
-            request = Request(name, T, d_max, st_r, d_r, F_r, b_r)
+            request = Request(r["d_max"], name, T, d_max, st_r, d_r, F_r, b_r)
             r_list.append(request)
             name = name + 1
         return r_list

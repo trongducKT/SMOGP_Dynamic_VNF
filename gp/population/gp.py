@@ -59,24 +59,31 @@ class Population:
         return n
 
     def mutation(self,individual, max_height=4, min_height=2 ):
-        #print("mutation")
+        print("mutation")
+        print("Parent")
+        print(individual.GetHumanExpression())
         mutation_branch = self.GenerateRandomTree( self.functions, self.terminals, max_height, min_height=min_height )
         
         nodes = individual.GetSubtree()
-
+        print("nodes 1")
+        print(nodes)
         nodes = self.__GetCandidateNodesAtUniformRandomDepth( nodes )
-
+        print(nodes)
         to_replace = nodes[randint(len(nodes))]
-
+        
         if not to_replace.parent:
             del individual
+            print("Offspring")
+            print(mutation_branch.GetHumanExpression())
             return mutation_branch
 
 
         p = to_replace.parent
         idx = p.DetachChild(to_replace)
         p.InsertChildAtPosition(idx, mutation_branch)
-
+        print("Offspring2")
+        print(individual.GetHumanExpression())
+        time.sleep(30)
         return individual
 
 

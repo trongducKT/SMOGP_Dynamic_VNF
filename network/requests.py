@@ -1,11 +1,12 @@
 
 class Request:
-    def __init__(self, name, arrival_time, lifetime, ingress, egress, VNFs: list, bandwidth=0):
+    def __init__(self,delay_max, name, arrival_time, lifetime, ingress, egress, VNFs: list, bandwidth=0):
         self.name = name
         # time
         self.arrival = arrival_time
         self.lifetime = lifetime
-
+        self.start_point = arrival_time
+        self.delay_max = delay_max
         # params
         self.ingress = ingress # start_node
         self.egress = egress # destination_node

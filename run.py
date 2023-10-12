@@ -118,18 +118,26 @@ def calFitness(alpha, decision_indi, chosing_indi, network, request_list, vnf_li
     request_list_copy = deepcopy(request_list)
     sum_max_cost = get_max_cost_request(vnf_list, request_list_copy)
     sum_request = len(request_list_copy)
+    sum_max_wait = 0
+#     for request in request_list_copy:
+#         sum_max_wait = sum_max_wait + request.delay_max
 #     print("sum_max_cost",sum_max_cost)
 #     print("sum_request", sum_request)
     T = request_list_copy[0].arrival
     reject = 0
     cost_sum = 0
+    wait_sum = 0
     while len(request_list_copy) > 0:
         request_processing, reject_request, reject1 = get_request_run(request_list_copy, 0, T)
         for request in request_processing:
             request_list_copy.remove(request)
         for request in reject_request:
+#             print("Hello Viet Name, 130 run.py")
+#             print(request.name)
             request_list_copy.remove(request)
-        reject = reject+ reject1
+#             wait_sum = wait_sum + request.delay_max
+        reject = reject + reject1
+#         print("Hello World 130", reject1)
 
         request_decision = []
         for request in request_processing:
@@ -142,14 +150,19 @@ def calFitness(alpha, decision_indi, chosing_indi, network, request_list, vnf_li
             update_state, cost, hanhtrinh = deploy(network_copy, re_de[0], chosing_indi, vnf_list)
             if update_state == False:
                 re_de[0].arrival = re_de[0].arrival + 1
-                request_list_copy.insert(0,re_de[0])
                 re_de[0].push_number = re_de[0].push_number + 1
+#                 if re_de[0].push_number < 3:
+#                     request_list_copy.insert(0,re_de[0])
+#                 else:
+#                     reject = reject + 1
+                request_list_copy.insert(0,re_de[0])
             else:
                 processing_history[re_de[0].name] ={ 
                     "Time slot": T,
                     "Path": hanhtrinh
                                                     }
                 cost_sum = cost_sum + cost
+                wait_sum = wait_sum + T - re_de[0].start_point
                 for update_item in update_state:
                     if update_item[0] == None:
                         update_link_state(network_copy.links, update_item[4], update_item[5], update_item[6], update_item[7])
@@ -170,28 +183,27 @@ def trainGP(processing_number, alpha, network, function, terminal_decision, term
     fitness_history["chosing"] = []
     time_start = time.time()
     
-    decision_pop = Population(pop_size -1, function, terminal_decision, min_height, max_height, initialization_max_height, evaluation)
-    chosing_pop = Population(pop_size -1, function, terminal_chosing, min_height, max_height, initialization_max_height, evaluation)
+    decision_pop = Population(pop_size , function, terminal_decision, min_height, max_height, initialization_max_height, evaluation)
+    chosing_pop = Population(pop_size , function, terminal_chosing, min_height, max_height, initialization_max_height, evaluation)
     
     decision_pop.random_init()
     chosing_pop.random_init()
     
+#     node1 = MinDD()
+#     node2 = Scale()
+#     node3 = MinCost()
+#     node4 = Scale()
+#     func1 = AddNode()
+#     func2 = AddNode()
     
-    node1 = MinDD()
-    node2 = Scale()
-    node3 = MinCost()
-    node4 = Scale()
-    func1 = AddNode()
-    func2 = AddNode()
-    
-    func1.AppendChild(node1)
-    func1.AppendChild(node2)
-    func2.AppendChild(node3)
-    func2.AppendChild(node4) 
-    indi1 = Individual(func1)
-    indi2 = Individual(func2)  
-    decision_pop.indivs.append(indi1)
-    chosing_pop.indivs.append(indi2)
+#     func1.AppendChild(node1)
+#     func1.AppendChild(node2)
+#     func2.AppendChild(node3)
+#     func2.AppendChild(node4) 
+#     indi1 = Individual(func1)
+#     indi2 = Individual(func2)  
+#     decision_pop.indivs.append(indi1)
+#     chosing_pop.indivs.append(indi2)
     
     decision_best = decision_pop.indivs[0]
     chosing_best = chosing_pop.indivs[0]
@@ -217,12 +229,21 @@ def trainGP(processing_number, alpha, network, function, terminal_decision, term
     for indi, value in zip(chosing_pop.indivs, result[len_decision:]):
         indi.fitness, indi.reject, indi.cost, a = value
     print("Tinh fitness khoi tạo xong")   
-
+    for indi in decision_pop.indivs:
+        print("Decision_indi",indi.chromosomes.GetHeight(), indi.fitness, indi.chromosomes.GetHumanExpression())
+        print()
+    for indi in chosing_pop.indivs:
+        print("Chosing_indi", indi.chromosomes.GetHeight(), indi.fitness, indi.chromosomes.GetHumanExpression())
+        print()
+    
+#     time.sleep(20)
+    
+    
     sum_gen = 0   
     for i in range(max_gen):
         decision_offspring = decision_pop.reproduction(crossover_rate, mutation_rate)
         chosing_offspring = chosing_pop.reproduction(crossover_rate, mutation_rate)
-        
+
     
         arg = []
         for indi in decision_offspring:
@@ -247,14 +268,41 @@ def trainGP(processing_number, alpha, network, function, terminal_decision, term
 #         print(len(decision_pop.indivs))
         chosing_pop.natural_selection()
         print("The he", i)
-#         for indi in decision_pop.indivs:
-#             print("Decision",indi.fitness, indi.chromosomes.GetHumanExpression())
-#         for indi in chosing_pop.indivs:
-#             print("Chosing",indi.fitness, indi.chromosomes.GetHumanExpression())        
-        if decision_pop.indivs[0].fitness < decision_best.fitness:
-            decision_best = decision_pop.indivs[0]
-        if chosing_pop.indivs[0].fitness < chosing_best.fitness:
-            chosing_best = chosing_pop.indivs[0]
+        for indi in decision_pop.indivs:
+            print("Decision",indi.fitness, indi.chromosomes.GetHumanExpression())
+        for indi in chosing_pop.indivs:
+            print("Chosing",indi.fitness, indi.chromosomes.GetHumanExpression())        
+#         if decision_pop.indivs[0].fitness < decision_best.fitness:
+#             decision_best = decision_pop.indivs[0]
+#         if chosing_pop.indivs[0].fitness < chosing_best.fitness:
+#             chosing_best = chosing_pop.indivs[0]
+        time.sleep(10)
+        if decision_pop.indivs[0].fitness < chosing_pop.indivs[0].fitness:
+#             print(281)
+            if decision_pop.indivs[0].fitness < decision_best.fitness:
+#                 print(283)
+                decision_best = decision_pop.indivs[0]
+
+                arg = []
+                for indi in chosing_pop.indivs:
+                    arg.append((alpha, decision_best, indi, network, request_list, vnf_list))
+                result = pool.starmap(calFitness, arg)
+                for indi, value in zip(chosing_pop.indivs, result):
+                    indi.fitness, indi.reject, indi.cost, a = value
+    
+        else:
+#             print(286)
+            if chosing_pop.indivs[0].fitness < chosing_best.fitness:
+#                 print(288)
+                chosing_best = chosing_pop.indivs[0]
+    
+                arg = []
+                for indi in decision_pop.indivs:
+                    arg.append((alpha, indi, chosing_best, network, request_list, vnf_list))
+
+                result = pool.starmap(calFitness, arg)
+                for indi, value in zip(decision_pop.indivs, result):
+                    indi.fitness, indi.reject, indi.cost, a = value
             
         decision_pop.history.append(decision_pop.indivs[0].fitness)
         chosing_pop.history.append(chosing_pop.indivs[0].fitness)
@@ -285,7 +333,7 @@ def run_proposed(data_path, processing_num, alpha, num_train,  pop_size, min_hei
 
     get_max_cost_vnf(network.MDC_nodes, vnf_list)
 
-    function = [AddNode(), SubNode(), MulNode(), DivNode(), MaxNode(), MinNode(), SinNode(), CosNode(), PowNode()]
+    function = [AddNode(), SubNode(), MulNode(), DivNode(), MaxNode(), MinNode()]
     terminal_decision = [DDR(), BR(), RRS(), CRS(), MRS(), ARS(), CRS(), MRS(), MDR(), PN(), Const()]
     terminal_chosing = [RCSe(), RRSe(), RMSe(), MLU(), CS(), DS(), MUC(), MUM(), MUR(), Const()]
         
@@ -463,7 +511,7 @@ def heuristic6(data_path, alpha, num_train):
     network.add_link_to_network(link_node)
     get_max_cost_vnf(network.MDC_nodes, vnf_list)
     
-    determining_indi = Individual(MinDD())
+    determining_indi = Individual(DDR())
     choosing_indi = Individual(CS_Relax())
         
     request_train = []

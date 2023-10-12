@@ -162,7 +162,7 @@ class FIFO_DD(Node):
     def GetOutput(self, X):
         temp = X.r.lifetime - X.T
         rand = temp * np.random.uniform(0,1)
-        return -(temp + rand)
+        return (temp + rand)
     
 class MinDD(Node):
     def __init__(self):
