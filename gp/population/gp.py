@@ -1,6 +1,7 @@
 from copy import deepcopy
 import numpy as np
 from numpy.random import randint
+import time
 
 
 class Individual:
@@ -59,50 +60,61 @@ class Population:
         return n
 
     def mutation(self,individual, max_height=4, min_height=2 ):
-        print("mutation")
-        print("Parent")
-        print(individual.GetHumanExpression())
-        mutation_branch = self.GenerateRandomTree( self.functions, self.terminals, max_height, min_height=min_height )
+        # mutation_branch = self.GenerateRandomTree( self.functions, self.terminals, max_height, min_height=min_height )
         
         nodes = individual.GetSubtree()
-        print("nodes 1")
-        print(nodes)
-        nodes = self.__GetCandidateNodesAtUniformRandomDepth( nodes )
-        print(nodes)
+        # print("nodes66", nodes)
+        nodes, chosen_depth = self.__GetCandidateNodesAtUniformRandomDepth(nodes, self.max_height )
+        # print("node68", nodes)
         to_replace = nodes[randint(len(nodes))]
+        # print("to_replace", to_replace)
         
+        # mutation_branch = self.GenerateRandomTree( self.functions, self.terminals, max_height, min_height=min_height )
         if not to_replace.parent:
+            mutation_branch = self.GenerateRandomTree( self.functions, self.terminals, max_height, min_height=min_height )
             del individual
-            print("Offspring")
-            print(mutation_branch.GetHumanExpression())
             return mutation_branch
 
-
+        if chosen_depth == self.max_height:
+            mutation_branch = np.random.choice(self.terminals)
+        else:
+            mutation_branch = self.GenerateRandomTree(self.functions, self.terminals, self.max_height - chosen_depth, min_height = 1)
+        
+        
         p = to_replace.parent
         idx = p.DetachChild(to_replace)
+            
+        # mutation_branch = self.GenerateRandomTree( self.functions, self.terminals, max_height -depth_index -1, min_height=min_height )
         p.InsertChildAtPosition(idx, mutation_branch)
-        print("Offspring2")
-        print(individual.GetHumanExpression())
-        time.sleep(30)
         return individual
 
 
-    def crossover(self, individual, donor ):
+    def crossover(self, individual, donor, max_height=4, min_height=2 ):
         #print("crossover")
 	# this version of crossover returns 1 child
+        individual = deepcopy(individual)
         nodes1 = individual.GetSubtree()
+        # print("Hello 96", nodes1)
         nodes2 = donor.GetSubtree()	# no need to deep copy all nodes of parent2
+        # print("Hello 98", nodes2)
+        nodes1, depth_node1 = self.__GetCandidateNodesAtUniformRandomDepth( nodes1, self.max_height )
+        nodes2, depth_node2 = self.__GetCandidateNodesAtUniformRandomDepth_crossover( nodes2, self.max_height - depth_node1 )
 
-        nodes1 = self.__GetCandidateNodesAtUniformRandomDepth( nodes1 )
-        nodes2 = self.__GetCandidateNodesAtUniformRandomDepth( nodes2 )
-
+        while nodes2 == False:
+            nodes1, depth_node1 = self.__GetCandidateNodesAtUniformRandomDepth( nodes1, self.max_height )
+            nodes2, depth_node2 = self.__GetCandidateNodesAtUniformRandomDepth_crossover( nodes2, self.max_height - depth_node1 )
+        # print(depth_node1, depth_node2)
+        # print(nodes1, nodes2)
         to_swap1 = nodes1[ randint(len(nodes1)) ]
-        to_swap2 = deepcopy( nodes2[ randint(len(nodes2)) ] )	# we deep copy now, only the sutbree from parent2
+        to_swap2 = deepcopy( nodes2[ randint(len(nodes2)) ] )
+        # print("to_swap1", to_swap1)
+        # print("to_swap2", to_swap2)
         to_swap2.parent = None
 
         p1 = to_swap1.parent
 
         if not p1:
+            # print("Tai goc")
             return to_swap2
 
         idx = p1.DetachChild(to_swap1)
@@ -111,13 +123,31 @@ class Population:
         return individual
 
 
-    def __GetCandidateNodesAtUniformRandomDepth(self,nodes ):
+    def __GetCandidateNodesAtUniformRandomDepth(self,nodes, max_height_thereshold):
 
-        depths = np.unique( [x.GetDepth() for x in nodes] )
+        depths_total = np.unique( [x.GetDepth() for x in nodes] )
+        depths = []
+        for depth in depths_total:
+            if depth > 0 and depth <= max_height_thereshold:
+                depths.append(depth)
         chosen_depth = depths[randint(len(depths))]
         candidates = [x for x in nodes if x.GetDepth() == chosen_depth]
 
-        return candidates
+        return candidates, chosen_depth
+    
+    def __GetCandidateNodesAtUniformRandomDepth_crossover(self,nodes, max_height_thereshold):
+
+        heights_total = np.unique( [x.GetHeight() for x in nodes] )
+        heights = []
+        for height in heights_total:
+            if height <= max_height_thereshold:
+                heights.append(height)
+        if len(heights) == 0:
+            return False, False
+        chosen_height = heights[randint(len(heights))]
+        candidates = [x for x in nodes if x.GetHeight() == chosen_height]
+
+        return candidates, chosen_height
 
     def reproduction(self, crossover_rate, mutation_rate):
         #print("reproduction")
@@ -125,23 +155,18 @@ class Population:
         for i in range( self.pop_size ):
             o = deepcopy(self.indivs[i]).chromosomes
             if ( np.random.rand() < crossover_rate ):
-                o = self.crossover(o,self.indivs[ randint( self.pop_size )].chromosomes)
-            if ( np.random.rand() < crossover_rate + mutation_rate ):
-                o = self.mutation(o)
+                o1 = self.crossover(o,self.indivs[ randint( self.pop_size )].chromosomes, self.max_height, self.min_height)
+                height1 = o1.GetHeight()
+                if height1 >= self.min_height and height1 <= self.max_height:
+                    O.append(Individual(o1))
+
+            if ( np.random.rand() < mutation_rate ):
+                o2 = self.mutation(o, self.max_height, self.min_height)
+
+                height2 = o2.GetHeight()
+                if height2 >= self.min_height and height2 <= self.max_height:
+                    O.append(Individual(o2))
             # check offspring meets constraints	
-            invalid_offspring = False
-            if len(o.GetSubtree()) > self.max_height:
-                invalid_offspring = True
-            elif (o.GetHeight() < self.min_height):
-                invalid_offspring = True	
-            if invalid_offspring:
-                del o
-                o = deepcopy(self.indivs[i]).chromosomes
-                ind = Individual(o,self.indivs[i].fitness)
-            else:
-                ind = Individual(o)
-                #ind.fitness = self.evaluation(ind)
-            O.append(ind)
         return O
 
     def natural_selection(self):

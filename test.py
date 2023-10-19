@@ -8,8 +8,8 @@ if __name__ == '__main__':
         print(path)
         result = {}
         result["dataset"] = path
-#         fitness, rejected, cost, proc, sum_gen, fitness_train, time_train, fitness_history = run_proposed(path, 100, 0.5, 10, 20, 2, 8, 4, 10, 100, 0.8, 0.5 )
-#         print("GP", fitness, rejected, cost)
+        fitness, rejected, cost, proc, sum_gen, fitness_train, time_train, fitness_history = run_proposed(path, 4, 0.5, 10, 10, 2, 8, 4, 10, 100, 0.8, 0.5 )
+        print("GP", fitness, rejected, cost)
 
 #         fitness1, rejected1, cost1, proc1= heuristic1(path, 0.5, 10)
 

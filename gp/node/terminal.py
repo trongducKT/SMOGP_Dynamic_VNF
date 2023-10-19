@@ -12,7 +12,7 @@ class DDR(Node):
     def _GetHumanExpressionSpecificNode(self, args):
         return "DDR"
     def GetOutput(self, X):
-        return X.r.lifetime - X.T
+        return (X.r.lifetime - X.T)
     
 # Bandwidth of request
 class BR(Node):
@@ -103,7 +103,7 @@ class MRS(Node):
         temp = 0
         for vnf in X.r.VNFs:
             temp += X.VNFs_resource[vnf]["mem"]
-        return temp/len(X.r.VNFs)   
+        return temp/len(X.r.VNFs)  
     
 
 # max_delay in server of request
@@ -118,7 +118,7 @@ class MDR(Node):
         temp = 0
         for vnf in X.r.VNFs:
             temp += X.VNF_max_delay[vnf]
-        return temp    
+        return temp  
     
     
 class Rand(Node):

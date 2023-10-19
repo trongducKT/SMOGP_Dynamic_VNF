@@ -229,12 +229,12 @@ def trainGP(processing_number, alpha, network, function, terminal_decision, term
     for indi, value in zip(chosing_pop.indivs, result[len_decision:]):
         indi.fitness, indi.reject, indi.cost, a = value
     print("Tinh fitness khoi tạo xong")   
-    for indi in decision_pop.indivs:
-        print("Decision_indi",indi.chromosomes.GetHeight(), indi.fitness, indi.chromosomes.GetHumanExpression())
-        print()
-    for indi in chosing_pop.indivs:
-        print("Chosing_indi", indi.chromosomes.GetHeight(), indi.fitness, indi.chromosomes.GetHumanExpression())
-        print()
+    # for indi in decision_pop.indivs:
+    #     print("Decision_indi",indi.chromosomes.GetHeight(), indi.fitness, indi.chromosomes.GetHumanExpression())
+    #     print()
+    # for indi in chosing_pop.indivs:
+    #     print("Chosing_indi", indi.chromosomes.GetHeight(), indi.fitness, indi.chromosomes.GetHumanExpression())
+    #     print()
     
 #     time.sleep(20)
     
@@ -266,17 +266,12 @@ def trainGP(processing_number, alpha, network, function, terminal_decision, term
         
         decision_pop.natural_selection()
 #         print(len(decision_pop.indivs))
-        chosing_pop.natural_selection()
-        print("The he", i)
-        for indi in decision_pop.indivs:
-            print("Decision",indi.fitness, indi.chromosomes.GetHumanExpression())
-        for indi in chosing_pop.indivs:
-            print("Chosing",indi.fitness, indi.chromosomes.GetHumanExpression())        
+        chosing_pop.natural_selection()     
 #         if decision_pop.indivs[0].fitness < decision_best.fitness:
 #             decision_best = decision_pop.indivs[0]
 #         if chosing_pop.indivs[0].fitness < chosing_best.fitness:
 #             chosing_best = chosing_pop.indivs[0]
-        time.sleep(10)
+        # time.sleep(10)
         if decision_pop.indivs[0].fitness < chosing_pop.indivs[0].fitness:
 #             print(281)
             if decision_pop.indivs[0].fitness < decision_best.fitness:
@@ -307,6 +302,12 @@ def trainGP(processing_number, alpha, network, function, terminal_decision, term
         decision_pop.history.append(decision_pop.indivs[0].fitness)
         chosing_pop.history.append(chosing_pop.indivs[0].fitness)
         sum_gen = i+1
+        
+        print("The he", i)
+        for indi in decision_pop.indivs:
+            print("Decision",indi.fitness, indi.chromosomes.GetHumanExpression())
+        for indi in chosing_pop.indivs:
+            print("Chosing",indi.fitness, indi.chromosomes.GetHumanExpression())   
         print("The he ",i)
         print("Decision",decision_best.fitness)
         print("Chosing",chosing_best.fitness)
