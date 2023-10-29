@@ -159,7 +159,7 @@ def checkChange(history):
     if len(history) < 20:
         return False
     last = history[-1]
-    for value in history[-10:]:
+    for value in history[-20:]:
         if value != last:
             return False
     return True
