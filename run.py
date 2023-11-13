@@ -508,7 +508,7 @@ def heuristic6(data_path, alpha, num_train):
     network.add_link_to_network(link_node)
     get_max_cost_vnf(network.MDC_nodes, vnf_list)
     
-    determining_indi = Individual(DDR())
+    determining_indi = Individual(MinDD())
     choosing_indi = Individual(CS_Relax())
         
     request_train = []
