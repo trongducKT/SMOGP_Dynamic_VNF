@@ -11,6 +11,8 @@ class DDR(Node):
         return "DDR"
     def _GetHumanExpressionSpecificNode(self, args):
         return "DDR"
+    def getSymbol(self):
+        return 10
     def GetOutput(self, X):
         return (X.r.lifetime - X.T)
     
@@ -22,6 +24,9 @@ class BR(Node):
         return "BR"
     def _GetHumanExpressionSpecificNode(self, args):
         return "BR"
+    def getSymbol(self):
+        return 11    
+
     def GetOutput(self, X):
         return X.r.bw
 
@@ -33,6 +38,10 @@ class RRS(Node):
         return "RRS"
     def _GetHumanExpressionSpecificNode(self, args):
         return "RRS"
+    
+    def getSymbol(self):
+        return 12
+    
     def GetOutput(self, X):
         return X.VNFs_request_resource["ram"]
     
@@ -44,6 +53,9 @@ class CRS(Node):
         return "CRS"
     def _GetHumanExpressionSpecificNode(self, args):
         return "CRS"
+
+    def getSymbol(self):
+        return 13
     def GetOutput(self, X):
         return X.VNFs_request_resource["cpu"]
     
@@ -55,6 +67,8 @@ class MRS(Node):
         return "MRS"
     def _GetHumanExpressionSpecificNode(self, args):
         return "MRS"
+    def getSymbol(self):
+        return 14
     def GetOutput(self, X):
         return X.VNFs_request_resource["mem"]
     
@@ -67,6 +81,9 @@ class ARS(Node):
         return "ARS"
     def _GetHumanExpressionSpecificNode(self, args):
         return "ARS"
+
+    def getSymbol(self):
+        return 15
     def GetOutput(self, X):
         temp = 0
         for vnf in X.r.VNFs:
@@ -82,6 +99,9 @@ class CRS(Node):
         return "CRS"
     def _GetHumanExpressionSpecificNode(self, args):
         return "CRS"
+
+    def getSymbol(self):
+        return 16
     def GetOutput(self, X):
         temp = 0
         for vnf in X.r.VNFs:
@@ -98,7 +118,8 @@ class MRS(Node):
         return "MRS"
     def _GetHumanExpressionSpecificNode(self, args):
         return "MRS"
-    
+    def getSymbol(self):
+        return 17
     def GetOutput(self, X):
         temp = 0
         for vnf in X.r.VNFs:
@@ -114,6 +135,8 @@ class MDR(Node):
         return "MDR"
     def _GetHumanExpressionSpecificNode(self, args):
         return "MDR"
+    def getSymbol(self):
+        return 18
     def GetOutput(self, X):
         temp = 0
         for vnf in X.r.VNFs:
@@ -128,6 +151,8 @@ class Rand(Node):
         return "Rand"
     def _GetHumanExpressionSpecificNode(self, args):
         return "Rand"
+    def getSymbol(self):
+        return 19
     def GetOutput(self, X):
         return np.random.rand()
     
@@ -138,6 +163,8 @@ class Const(Node):
         return "Const"
     def _GetHumanExpressionSpecificNode(self, args):
         return "Const"
+    def getSymbol(self):
+        return 20
     def GetOutput(self, X):
         return 1
     
@@ -149,6 +176,8 @@ class PN(Node):
         return "PN"
     def _GetHumanExpressionSpecificNode(self, args):
         return "PN"
+    def getSymbol(self):
+        return 21
     def GetOutput(self, X):
         return X.r.push_number
 
@@ -159,6 +188,9 @@ class FIFO_DD(Node):
         return "FIFO_DD"
     def _GetHumanExpressionSpecificNode(self, args):
         return "FIFO_DD"
+    
+    def getSymbol(self):
+        return 22
     def GetOutput(self, X):
         temp = X.r.lifetime - X.T
         rand = temp * np.random.uniform(0,1)
@@ -171,6 +203,8 @@ class MinDD(Node):
         return "MinDD"
     def _GetHumanExpressionSpecificNode(self, args):
         return "MinDD"
+    def getSymbol(self):
+        return 23
     def GetOutput(self, X):
         return -(X.r.lifetime-X.T)               
 
@@ -184,6 +218,8 @@ class RCSe(Node):
         return "RCSe"
     def _GetHumanExpressionSpecificNode(self, args):
         return "RCSe"
+    def getSymbol(self):    
+        return 24
     def GetOutput(self, X):
         return X.server_state["cpu"]
     
@@ -195,6 +231,8 @@ class RRSe(Node):
         return "RRSe"
     def _GetHumanExpressionSpecificNode(self, args):
         return "RRSe"
+    def getSymbol(self):
+        return 25
     def GetOutput(self, X):
         return X.server_state["ram"]
     
@@ -206,6 +244,8 @@ class  RMSe(Node):
         return "RMSe"
     def _GetHumanExpressionSpecificNode(self, args):
         return "RMSe"
+    def getSymbol(self):
+        return 26
     def GetOutput(self, X):
         return X.server_state["mem"]
     
@@ -217,6 +257,8 @@ class MLU(Node):
         return "MLU"
     def _GetHumanExpressionSpecificNode(self, args):
         return "MLU"
+    def getSymbol(self):
+        return 27
     def GetOutput(self, X):
         return X.MLU
     
@@ -228,6 +270,8 @@ class CS(Node):
         return "CS"
     def _GetHumanExpressionSpecificNode(self, args):
         return "CS"
+    def getSymbol(self):
+        return 28
     def GetOutput(self, X):
         return X.cost
 
@@ -240,6 +284,8 @@ class DS(Node):
         return "DS"
     def _GetHumanExpressionSpecificNode(self, args):
         return "DS"
+    def getSymbol(self):
+        return 29
     def GetOutput(self, X):
         return X.delay
 # The max utilization of CPU in server
@@ -251,6 +297,9 @@ class MUC(Node):
         return "MUC"
     def _GetHumanExpressionSpecificNode(self, args):
         return "MUC"
+
+    def getSymbol(self):
+        return 30
     def GetOutput(self, X):
         return 1-X.MRU["cpu"]
 
@@ -263,6 +312,9 @@ class MUR(Node):
         return "MUR"
     def _GetHumanExpressionSpecificNode(self, args):
         return "MUR"
+    def getSymbol(self):
+        return 31
+
     def GetOutput(self, X):
         return 1-X.MRU["ram"]
         
@@ -275,6 +327,8 @@ class MUM(Node):
         return "MUM"
     def _GetHumanExpressionSpecificNode(self, args):
         return "MUM"
+    def getSymbol(self):
+        return 32
     def GetOutput(self, X):
         return 1-X.MRU["mem"]
     
@@ -286,6 +340,9 @@ class MinCost(Node):
         return "MinCost"
     def _GetHumanExpressionSpecificNode(self, args):
         return "MinCost"
+    
+    def getSymbol(self):
+        return 33
     def GetOutput(self, X):
         return -X.cost
     
@@ -296,6 +353,9 @@ class Relax(Node):
         return "Relax"
     def _GetHumanExpressionSpecificNode(self, args):
         return "Relax"
+    
+    def getSymbol(self):
+        return 34
     def GetOutput(self, X):
         temp = 1-X.MRU["mem"] + 1-X.MRU["ram"] + 1-X.MRU["cpu"]
         temp = temp/3
@@ -308,6 +368,9 @@ class  CS_Relax(Node):
         return "CS_Relax"
     def _GetHumanExpressionSpecificNode(self, args):
         return "CS_Relax"
+
+    def getSymbol(self):
+        return 35
     def GetOutput(self, X):
         temp = 1-X.MRU["mem"] + 1-X.MRU["ram"] + 1-X.MRU["cpu"]
         temp = temp/3
@@ -320,6 +383,9 @@ class Scale(Node):
         return "Scale"
     def _GetHumanExpressionSpecificNode(self, args):
         return "Scale"
+
+    def getSymbol(self):
+        return 36
     def GetOutput(self, X):
         return 1 
     

@@ -9,6 +9,9 @@ class AddNode(Node):
 	def __repr__(self):
 		return '+'
 
+	def getSymbol(self):
+		return 1
+
 	def _GetHumanExpressionSpecificNode( self, args ):
 		return '( ' + args[0] + ' + ' + args[1] + ' )'
 
@@ -24,6 +27,9 @@ class SubNode(Node):
 
 	def __repr__(self):
 		return '-'
+
+	def getSymbol(self):
+		return 2
 
 	def _GetHumanExpressionSpecificNode( self, args ):
 		return '( ' + args[0] + ' - ' + args[1] + ' )'
@@ -41,6 +47,9 @@ class MulNode(Node):
 	def __repr__(self):
 		return '*'
 
+	def getSymbol(self):
+		return 3
+
 	def _GetHumanExpressionSpecificNode( self, args ):
 		return '( ' + args[0] + ' * ' + args[1] + ' )'
 
@@ -57,6 +66,8 @@ class DivNode(Node):
 	def __repr__(self):
 		return '/'
 
+	def getSymbol(self):
+		return 4
 	def _GetHumanExpressionSpecificNode( self, args ):
 		return '( ' + args[0] + ' / ' + args[1] + ' )'
 
@@ -74,7 +85,10 @@ class MaxNode(Node):
 
     def __repr__(self):
         return 'Max'
-
+    
+    def getSymbol(self):
+        return 5
+    
     def _GetHumanExpressionSpecificNode( self, args ):
         return 'Max( ' + args[0] + ',' + args[1] + ' )'
 
@@ -89,6 +103,8 @@ class MinNode(Node):
 
     def __repr__(self):
         return 'Min'
+    def getSymbol(self):
+        return 6
 
     def _GetHumanExpressionSpecificNode( self, args ):
         return 'Min( ' + args[0] + ' ,' + args[1] + ' )'
