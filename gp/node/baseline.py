@@ -3,9 +3,8 @@ import numpy as np
 class Node:	# Base class with general functionalities
 
 	def __init__(self):
-		self.fitness = np.inf
 		self.parent = None
-		self.arity = 0	# arity is the number of expected inputs
+		self.arity = 0	# arity is the number of subtrees
 		self._children = []
 
 	def GetSubtree( self ):
