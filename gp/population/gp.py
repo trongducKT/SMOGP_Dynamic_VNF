@@ -10,7 +10,7 @@ class Individual:
     def __init__(self, determining_tree, choosing_tree):
         self.determining_tree = determining_tree
         self.choosing_tree = choosing_tree
-        self.objectives = None
+        self.objectives = np.zeros(2)
         self.rank = None
         self.crowding_distance = None
         self.domination_count = None # be dominated
@@ -27,10 +27,12 @@ class Individual:
     
     # Individual equation
     def __eq__(self, other):
+        # Tree 1
         expr1 = self.determining_tree.GetHumanExpression()
         expr2 = other.determining_tree.GetHumanExpression()
         if expr1 != expr2:
             return False
+        # Tree 2
         expr1 = self.choosing_tree.GetHumanExpression()
         expr2 = other.choosing_tree.GetHumanExpression()
         if expr1 != expr2:
@@ -51,7 +53,7 @@ class Population:
         self.max_height = max_height
         self.initialization_max_tree_height = initialization_max_tree_height
         self.indivs = []
-        self.num_of_tour_particips = num_of_tour_particips
+        self.num_of_tour_ptiarcips = num_of_tour_particips
         self.tournament_prob = tournament_prob
         self.crossover_rate = crossover_rate
         self.mutation_rate = mutation_rate
@@ -70,16 +72,16 @@ class Population:
                 individual.rank = 0
                 self.ParetoFront[0].append(individual)
         i = 0
-        while len(self.ParetoFront.fronts[i]) > 0:
+        while len(self.ParetoFront[i]) > 0:
             temp = []
-            for individual in self.ParetoFront.fronts[i]:
+            for individual in self.ParetoFront[i]:
                 for other_individual in individual.dominated_solutions:
                     other_individual.domination_count -= 1
                     if other_individual.domination_count == 0:
                         other_individual.rank = i + 1
                         temp.append(other_individual)
             i = i + 1
-            self.ParetoFront.fronts.append(temp)
+            self.ParetoFront.append(temp)
 
 
     def calculate_crowding_distance(self, front):
@@ -232,9 +234,12 @@ class Population:
             # individual1 = deepcopy(self.indivs[individual1_index])
             # individual2 = deepcopy(self.indivs[individual2_index])
             individual1, individual2 = random.sample(self.indivs, 2)
-
+            
+            SD = np.linalg.norm(individual1.objectives - individual2.objectives)
+            print("SD", SD)
             # crossover
-            if ( np.random.rand() < self.crossover_rate ):
+            # if ( np.random.rand() < self.crossover_rate ):
+            if ( SD > 0.1 ):
                 part_crossover = np.random.rand()
                 # determining tree crossover
                 if part_crossover < 1/3:
@@ -259,7 +264,8 @@ class Population:
                             O.append(Individual(o1, o2))
 
             # mutation
-            if ( np.random.rand() < self.mutation_rate ):
+            # if ( np.random.rand() < self.mutation_rate ):
+            if ( SD < 0.1 ):
                 part_mutation = np.random.rand()
                 # determining tree mutation
                 if part_mutation < 1/3:
@@ -281,7 +287,13 @@ class Population:
                         o2 = self.mutation(individual1.choosing_tree, self.functions, self.choosing_terminals)
                         height2 = o2.GetHeight()
                         if height2 >= self.min_height and height2 <= self.max_height:
-                            O.append(Individual(o1, o2))
+                            O.append(Individual(o1, o2))    
+            # reproduction
+            if(np.random.rand() < 0.15):
+                tree1 = self.GenerateRandomTree(self.functions, self.determining_terminals, self.max_height, min_height = self.min_height )
+                tree2 = self.GenerateRandomTree(self.functions, self.choosing_terminals, self.max_height, min_height = self.min_height )
+                O.append(Individual(tree1, tree2))
+
         return O
 
     def tournament_selection(self, remove_position):
@@ -298,6 +310,7 @@ class Population:
         return best
 
     def natural_selection(self):
+        self.fast_nondominated_sort()
         new_indivs = []
         new_fronts = []
         front_num = 0
@@ -309,5 +322,5 @@ class Population:
         self.ParetoFront[front_num].sort(key=lambda individual: individual.crowding_distance, reverse=True)
         new_indivs.extend(self.ParetoFront[front_num][0:self.pop_size - len(new_indivs)])
         new_fronts.append(self.ParetoFront[front_num][0:self.pop_size - len(new_indivs)])
-        self.ParetoFront.fronts = new_fronts
+        self.ParetoFront = new_fronts
         self.indivs = new_indivs
