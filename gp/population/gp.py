@@ -15,7 +15,6 @@ class Individual:
         self.crowding_distance = None
         self.domination_count = None # be dominated
         self.dominated_solutions = None # dominate
-
     # Dominate operator
     def dominates(self, other_individual):
         and_condition = True
@@ -23,8 +22,7 @@ class Individual:
         for first, second in zip(self.objectives, other_individual.objectives):
             and_condition = and_condition and first <= second
             or_condition = or_condition or first < second
-        return (and_condition and or_condition)
-    
+        return (and_condition and or_condition)   
     # Individual equation
     def __eq__(self, other):
         # Tree 1
@@ -41,8 +39,10 @@ class Individual:
                  
 
 class Population:
-    def __init__(self, pop_size, functions, determining_terminals, choosing_terminals, min_height, max_height, 
-                 initialization_max_tree_height, num_of_tour_particips, tournament_prob, crossover_rate, mutation_rate):
+    def __init__(self, pop_size, functions, determining_terminals, choosing_terminals, 
+                 min_height, max_height, initialization_max_tree_height, 
+                 num_of_tour_particips, tournament_prob, crossover_rate, mutation_rate,
+                 crossover_operator, mutation_operator, gen_operator):
         self.history = []
         self.ParetoFront = []
         self.pop_size = pop_size
@@ -57,6 +57,9 @@ class Population:
         self.tournament_prob = tournament_prob
         self.crossover_rate = crossover_rate
         self.mutation_rate = mutation_rate
+        self.crossover_operator = crossover_operator
+        self.mutation_operator = mutation_operator
+        self.gen_operator = gen_operator
         
     def fast_nondominated_sort(self):
         self.ParetoFront = [[]]

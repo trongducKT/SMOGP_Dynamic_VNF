@@ -1,5 +1,5 @@
 import numpy as np
-from utils import link_search
+from utils.utils import link_search
 class Decision:
     def __init__(self, r, T , vnf_resource, max_delay, vnf_list):
         #rint("Khoi tao bien decision")
@@ -22,7 +22,7 @@ class Decision:
             "mem": mem
         }
 
-class Chosing:
+class Choosing:
     #T1, T2 in server
     #T3, T4 in link
      def __init__(self, server, T1, T2, path, path_delay, T3, T4, VNF, link_list ):
