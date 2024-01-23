@@ -5,7 +5,7 @@ from data_info.read_data import *
 from utils.utils import *
 from .deploy_request import *
 
-def calFitness(indi: Individual, network, request_list, vnf_list):
+def calFitness(indi, network, request_list, vnf_list):
     # storing processing history
     processing_history ={}
     network_copy = deepcopy(network)
@@ -29,6 +29,7 @@ def calFitness(indi: Individual, network, request_list, vnf_list):
         # Calculate value of GP for each request
         for request in request_processing:
             value_of_gp = decision_gp(indi, request, T, network_copy, vnf_list)
+            print("Gia tri GP ở biến decision: ", value_of_gp)
             request_decision.append((request, value_of_gp))
         request_decision = sorted(request_decision, key = lambda x: x[1], reverse = True)
 

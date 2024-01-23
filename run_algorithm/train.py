@@ -33,11 +33,12 @@ def trainGP(processing_number, network, vnf_list, request_list,
     arg = []
     for indi in pop.indivs:
         arg.append((indi, network, request_list, vnf_list))
+    print("Bat dau tinh fitness")
     result = pool.starmap(calFitness, arg)
     # len_decision = len(pop.indivs)
     for indi, value in zip(pop.indivs, result):
         indi.objectives[0],indi.objectives[1], indi.reject, indi.cost, a = value
-
+    print("Tinh fitness xong")
     sum_gen = 0   
     for i in range(max_gen):
         offspring = pop.reproduction()

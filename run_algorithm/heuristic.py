@@ -2,19 +2,10 @@ from gp.node.function import *
 from gp.node.terminal import *
 from gp.population.gp import *
 from data_info.read_data import *
-from priority_gp.decision_var import Decision, Choosing
 from network.network import Network
 from utils.utils import *
-import time 
-import multiprocessing     
-import csv
-import random
-import matplotlib.pyplot as plt
-
-
-
-
-
+from .train import *
+from deployment.evaluation import *
 # Heuristic 1: Random for determining policy and Random for choosing policy
 def heuristic1(data_path, alpha, num_train):
     data = Read_data(data_path)
@@ -187,4 +178,3 @@ def heuristic6(data_path, alpha, num_train):
     fitness, reject, cost, proc = calFitness(alpha, determining_indi, choosing_indi, network, request_test, vnf_list)
 
     return fitness, reject, cost, proc
-    

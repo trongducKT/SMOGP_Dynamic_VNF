@@ -56,7 +56,7 @@ def max_delay_vnf(list_server, list_vnf):
     return max_delay
 
 def dijkstra(network , start, end, bandwidth_requirement, T1,T2, node_list):
-    #print("dijkstra")
+    # print("dijkstra")
     graph = network.to_graph()
     
     distances = {vertex: float('inf') for vertex in graph}
@@ -93,7 +93,11 @@ def dijkstra(network , start, end, bandwidth_requirement, T1,T2, node_list):
     path.reverse()
     del graph
     del heap
+    # print(path)
     return distances[end], path
+
+# def k_shortest_paths(network, start, end, bandwidth_requirement, T1, T2, node_list, k):
+    
 
 def link_search(link_list, u, v):
     #print("link search")
