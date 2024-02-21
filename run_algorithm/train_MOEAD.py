@@ -33,11 +33,11 @@ class MOGPDPopulation(Population):
     def init_neighborhood(self):
         B = np.empty([self.pop_size, self.neighborhood_size], dtype=int)
         for i in range(self.pop_size):
-            wv = self.config.weight_vectors[i]
-            euclidean_distances = np.empty([self.config.N], dtype=float)
-            for j in range(self.config.N):
-                euclidean_distances[j] = np.linalg.norm(wv - self.config.weight_vectors[j])
-            B[i] = np.argsort(euclidean_distances)[:self.config.T]
+            wv = self.weights[i]
+            euclidean_distances = np.empty([self.pop_size], dtype=float)
+            for j in range(self.pop_size):
+                euclidean_distances[j] = np.linalg.norm(wv - self.weights[j])
+            B[i] = np.argsort(euclidean_distances)[:self.neighborhood_size]
         # print(B)
         return B
 
