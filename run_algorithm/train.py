@@ -17,17 +17,18 @@ def trainGP(processing_number, network, vnf_list, request_list,
     fitness_history["decision"] = []
     fitness_history["chosing"] = []
     time_start = time.time()
+    hv = []
     
     pop = Population(pop_size, functions, terminal_decision, terminal_choosing, 
                     min_height, max_height, initialization_max_height, num_of_tour_particips, tournament_prob,
                     crossover_rate, mutation_rate, reproduce_opertation, initialize_operator, selection_operator )
     pop.initialize()
 
-    print("Danh sach ca the khoi tao")
-    for indi in pop.indivs:
-        print(indi.determining_tree.GetHumanExpression())
-        print(indi.choosing_tree.GetHumanExpression())
-    print("Khoi tao xong")
+    # print("Danh sach ca the khoi tao")
+    # for indi in pop.indivs:
+    #     print(indi.determining_tree.GetHumanExpression())
+    #     print(indi.choosing_tree.GetHumanExpression())
+    # print("Khoi tao xong")
 
     pool = multiprocessing.Pool(processes=processing_number)
     arg = []
@@ -55,20 +56,33 @@ def trainGP(processing_number, network, vnf_list, request_list,
             
         sum_gen = i+1 
         print("The he ",i)
+        objective_Pareto = [indi.objectives for indi in pop.indivs if indi.rank == 0]
+        objective_Pareto = np.array(objective_Pareto)
+        print(objective_Pareto)
+        hv.append(cal_hv(objective_Pareto, np.array([1,1])))
+        print("Hypervolume: ", hv)
         for indi in pop.indivs:
             if(indi.rank == 0):
+
                 print(indi.objectives)
                 print(indi.determining_tree.GetHumanExpression())
                 print(indi.choosing_tree.GetHumanExpression())
                 print("Ket thuc mot ca the")
+        
+
         if checkChange(pop.history) == True and checkChange(pop.history) == True:
             break
 
-        if True:
-            x = [indi.objectives[0] for indi in pop.indivs if indi.rank == 0]
-            y = [indi.objectives[1] for indi in pop.indivs if indi.rank == 0]
-            print(len(x))
-            plt.scatter(x, y)
-            plt.show()
-    pool.close()              
+        # if True:
+        #     x = [indi.objectives[0] for indi in pop.indivs if indi.rank == 0]
+        #     y = [indi.objectives[1] for indi in pop.indivs if indi.rank == 0]
+        #     print(len(x))
+        #     plt.scatter(x, y)
+        #     plt.show()
+    pool.close()
+    # store hv in csv
+    name_path = str(time.time()) + "hv.csv"
+    with open(name_path, 'w') as file:
+        for item in hv:
+            file.write("%s\n" % item)             
     return sum_gen, time.time()-time_start, fitness_history  

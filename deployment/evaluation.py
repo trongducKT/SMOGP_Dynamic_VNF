@@ -29,7 +29,7 @@ def calFitness(indi, network, request_list, vnf_list):
         # Calculate value of GP for each request
         for request in request_processing:
             value_of_gp = decision_gp(indi, request, T, network_copy, vnf_list)
-            print("Gia tri GP ở biến decision: ", value_of_gp)
+            # print("Gia tri GP ở biến decision: ", value_of_gp)
             request_decision.append((request, value_of_gp))
         request_decision = sorted(request_decision, key = lambda x: x[1], reverse = True)
 
