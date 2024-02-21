@@ -1,6 +1,7 @@
 from gp.node.function import *
 from gp.node.terminal import *
-from gp.population.gp import *
+# from gp.population.gp import *
+from gp.population.individual import *
 from data_info.read_data import *
 from priority_gp.decision_var import Decision, Choosing
 from network.network import Network

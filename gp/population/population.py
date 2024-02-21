@@ -2,7 +2,7 @@ class Population:
     def __init__(self, pop_size, functions, determining_terminals, choosing_terminals, 
                  min_height, max_height, initialization_max_tree_height, 
                  num_of_tour_particips, tournament_prob, crossover_rate, mutation_rate,
-                 reproduce_opertation, initialize_operator, selection_operator):
+                initialize_operator, crossover_operator, mutation_operator, selection_operator):
         self.history = []
         self.ParetoFront = []
         self.pop_size = pop_size
@@ -18,18 +18,24 @@ class Population:
         self.crossover_rate = crossover_rate
         self.mutation_rate = mutation_rate
 
-        self.reproduce_opertation = reproduce_opertation
+        self.crossover_operator = crossover_operator
+        self.mutation_operator = mutation_operator
         self.initialize_operator = initialize_operator
         self.selection_operator = selection_operator
     
     def initialize(self):
         self.initialize_operator(self)
     
-    def reproduction(self):
-        return self.reproduce_opertation(self)
-
+    # def reproduction(self):
+    #     return self.reproduce_opertation(self)
     def natural_selection(self):
-        self.selection_operator(self)    
+        self.selection_operator(self) 
+
+    # def crossover(self, individual1, individual2):
+    #     return self.crossover_operator(individual1, individual2)
+    
+    # def mutation(self, individual1):
+    #     return self.mutation_operator(individual1)
     
 
     
