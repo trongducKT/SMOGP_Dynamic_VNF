@@ -35,48 +35,29 @@ if __name__ == '__main__':
     pc = 0.8
     pm = 0.1
     neighborhood_size = 3
-
-    data_path = r'./data_1_9/nsf_rural_easy_s3.json'
-
-    a = run_NSGAII( data_path, num_pro, num_train,  
-                function, terminal_decision, terminal_choosing, 
-                pop_size, max_gen,  min_height, max_height, initialization_max_height,  
-                num_of_tour_particips, tournament_prob, pc, pm,
-                random_init, crossover, mutation, natural_selection,
-                reproduction1, calFitness)
-    a = run_MOEAD(data_path, num_pro, num_train,  
-                function, terminal_decision, terminal_choosing, 
-                pop_size, max_gen,  min_height, max_height, initialization_max_height,  
-                pc, pm, random_init, crossover, mutation, natural_selection,
-                neighborhood_size,
-                calFitness)
+    data_set = [r'./data_1_9/nsf_centers_easy_s3.json', 
+                r'./data_1_9/nsf_centers_hard_s3.json', 
+                r'./data_1_9/nsf_centers_normal_s3.json',
+                r'./data_1_9/nsf_rural_easy_s3.json', 
+                r'./data_1_9/nsf_rural_hard_s3.json', 
+                r'./data_1_9/nsf_rural_normal_s3.json', 
+                r'./data_1_9/nsf_uniform_easy_s3.json', 
+                r'./data_1_9/nsf_uniform_hard_s3.json', 
+                r'./data_1_9/nsf_uniform_normal_s3.json', 
+                r'./data_1_9/nsf_urban_easy_s3.json', 
+                r'./data_1_9/nsf_urban_hard_s3.json',
+                r'./data_1_9/nsf_urban_normal_s3.json']
+    for data_path in data_set:
+        a = run_NSGAII( data_path, num_pro, num_train,  
+                    function, terminal_decision, terminal_choosing, 
+                    pop_size, max_gen,  min_height, max_height, initialization_max_height,  
+                    num_of_tour_particips, tournament_prob, pc, pm,
+                    random_init, crossover, mutation, natural_selection,
+                    reproduction1, calFitness)
+        a = run_MOEAD(data_path, num_pro, num_train,  
+                    function, terminal_decision, terminal_choosing, 
+                    pop_size, max_gen,  min_height, max_height, initialization_max_height,  
+                    pc, pm, random_init, crossover, mutation, natural_selection,
+                    neighborhood_size,
+                    calFitness)
     
-    data_path = r'./data_1_9/nsf_urban_normal_s2.json'
-
-    a = run_NSGAII( data_path, num_pro, num_train,  
-                function, terminal_decision, terminal_choosing, 
-                pop_size, max_gen,  min_height, max_height, initialization_max_height,  
-                num_of_tour_particips, tournament_prob, pc, pm,
-                random_init, crossover, mutation, natural_selection,
-                reproduction1, calFitness)
-    a = run_MOEAD(data_path, num_pro, num_train,  
-                function, terminal_decision, terminal_choosing, 
-                pop_size, max_gen,  min_height, max_height, initialization_max_height,  
-                pc, pm, random_init, crossover, mutation, natural_selection,
-                neighborhood_size,
-                calFitness)
-    
-    data_path = r'./data_1_9/nsf_rural_hard_s2.json'
-
-    a = run_NSGAII( data_path, num_pro, num_train,  
-                function, terminal_decision, terminal_choosing, 
-                pop_size, max_gen,  min_height, max_height, initialization_max_height,  
-                num_of_tour_particips, tournament_prob, pc, pm,
-                random_init, crossover, mutation, natural_selection,
-                reproduction1, calFitness)
-    a = run_MOEAD(data_path, num_pro, num_train,  
-                function, terminal_decision, terminal_choosing, 
-                pop_size, max_gen,  min_height, max_height, initialization_max_height,  
-                pc, pm, random_init, crossover, mutation, natural_selection,
-                neighborhood_size,
-                calFitness)

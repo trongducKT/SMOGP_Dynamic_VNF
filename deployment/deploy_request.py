@@ -31,10 +31,10 @@ def deploy(network: Network, request: Request, indi : Individual, vnf_list):
             while path_delay == None or (path_delay > int(T) + n - T):
                 n = n + 1
                 path_delay, path = dijkstra(network_copy, start_node, server, bw, int(T), int(T) + n, network_copy.get_node )
-                if n == int(lifetime - T):
+                if n >= int(lifetime - T):
                     break
         
-            if n == int(lifetime - T):
+            if n >= int(lifetime - T):
                 continue
             if path_delay == None or path == None:
                 continue
@@ -80,10 +80,10 @@ def deploy(network: Network, request: Request, indi : Individual, vnf_list):
     path_delay = np.inf
     while path_delay == None or (path_delay > int(T)+n - T):
         n = n+1
-        if n == int(lifetime - T):
+        if n >= int(lifetime - T):
             break
         path_delay, path = dijkstra(network_copy, start_node, end_node, bw, int(T), int(T) + n, network_copy.get_node)
-        if n == int(lifetime - T):
+        if n >= int(lifetime - T):
             break
     if path_delay == None or path_delay == np.inf:
         return False, False, False
