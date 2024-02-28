@@ -19,6 +19,11 @@ class AddNode(Node):
 		X0 = self._children[0].GetOutput( X )
 		X1 = self._children[1].GetOutput( X )
 		return X0 + X1
+	
+	def GetSurrogateOutput( self, X ):
+		X0 = self._children[0].GetSurrogateOutput( X )
+		X1 = self._children[1].GetSurrogateOutput( X )
+		return X0 + X1
 
 class SubNode(Node):
 	def __init__(self):
@@ -37,6 +42,11 @@ class SubNode(Node):
 	def GetOutput( self, X ):
 		X0 = self._children[0].GetOutput( X )
 		X1 = self._children[1].GetOutput( X )
+		return X0 - X1
+	
+	def GetSurrogateOutput( self, X ):
+		X0 = self._children[0].GetSurrogateOutput( X )
+		X1 = self._children[1].GetSurrogateOutput( X )
 		return X0 - X1
 
 class MulNode(Node):
@@ -58,6 +68,11 @@ class MulNode(Node):
 		X1 = self._children[1].GetOutput( X )
 		return X0 * X1
 	
+	def GetSurrogateOutput( self, X ):
+		X0 = self._children[0].GetSurrogateOutput( X )
+		X1 = self._children[1].GetSurrogateOutput( X )
+		return X0 * X1
+	
 class DivNode(Node):
 	def __init__(self):
 		super(DivNode,self).__init__()
@@ -74,6 +89,13 @@ class DivNode(Node):
 	def GetOutput( self, X ):
 		X0 = self._children[0].GetOutput( X )
 		X1 = self._children[1].GetOutput( X )
+		if X1 == 0:
+			return 1
+		return X0 /X1
+	
+	def GetSurrogateOutput( self, X ):
+		X0 = self._children[0].GetSurrogateOutput( X )
+		X1 = self._children[1].GetSurrogateOutput( X )
 		if X1 == 0:
 			return 1
 		return X0 /X1
@@ -96,6 +118,14 @@ class MaxNode(Node):
         X0 = self._children[0].GetOutput( X )
         X1 = self._children[1].GetOutput( X )
         return max(X0 , X1)
+
+    def GetSurrogateOutput( self, X ):
+        X0 = self._children[0].GetSurrogateOutput( X )
+        X1 = self._children[1].GetSurrogateOutput( X )
+        return max(X0 , X1)	
+
+
+
 class MinNode(Node):
     def __init__(self):
         super(MinNode,self).__init__()
@@ -113,6 +143,13 @@ class MinNode(Node):
         X0 = self._children[0].GetOutput( X )
         X1 = self._children[1].GetOutput( X )
         return min(X0 , X1)
+	
+    def GetSurrogateOutput( self, X ):
+        X0 = self._children[0].GetSurrogateOutput( X )
+        X1 = self._children[1].GetSurrogateOutput( X )
+        return min(X0 , X1)
+	
+
 class AnalyticQuotientNode(Node):
 	def __init__(self):
 		super(AnalyticQuotientNode,self).__init__()

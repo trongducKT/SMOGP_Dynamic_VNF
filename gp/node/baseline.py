@@ -36,6 +36,9 @@ class Node:	# Base class with general functionalities
 
 	def GetOutput( self, X ):
 		return None
+	
+	def GetSurrogateOutput( self, X ):
+		return None
 
 	def GetDepth(self):
 		n = self

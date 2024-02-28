@@ -8,6 +8,7 @@ class Individual:
         self.crowding_distance = None
         self.domination_count = None # be dominated
         self.dominated_solutions = None # dominate
+        self.pc = []
     # Dominate operator
     def dominates(self, other_individual):
         and_condition = True

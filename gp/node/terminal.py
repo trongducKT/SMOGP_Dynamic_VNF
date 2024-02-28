@@ -16,6 +16,9 @@ class DDR(Node):
     def GetOutput(self, X):
         return (X.r.lifetime - X.T)
     
+    def GetSurrogateOutput(self, X):
+        return X.DDR
+    
 # Bandwidth of request
 class BR(Node):
     def __init__(self):
@@ -29,6 +32,9 @@ class BR(Node):
 
     def GetOutput(self, X):
         return X.r.bw
+    
+    def GetSurrogateOutput(self, X):
+        return X.BR
 
 # sum of Ram of request
 class RRS(Node):
@@ -45,6 +51,9 @@ class RRS(Node):
     def GetOutput(self, X):
         return X.VNFs_request_resource["ram"]
     
+    def GetSurrogateOutput(self, X):
+        return X.RRS
+    
 # sum of CPU of request
 class CRS(Node):
     def __init__(self):
@@ -59,6 +68,9 @@ class CRS(Node):
     def GetOutput(self, X):
         return X.VNFs_request_resource["cpu"]
     
+    def GetSurrogateOutput(self, X):
+        return X.CRS
+    
 # sum of memory of request
 class MRS(Node):
     def __init__(self):
@@ -71,6 +83,8 @@ class MRS(Node):
         return 14
     def GetOutput(self, X):
         return X.VNFs_request_resource["mem"]
+    def GetSurrogateOutput(self, X):
+        return X.MRS
     
 # average of max_RAM that can be used in server of request
 class ARS(Node):
@@ -90,6 +104,9 @@ class ARS(Node):
             temp += X.VNFs_resource[vnf]["ram"]
         return temp/len(X.r.VNFs)
     
+    def GetSurrogateOutput(self, X):
+        return X.ARS
+    
 # average of max_CPU that can be used in server of request
 class CRS(Node):
     def __init__(self):
@@ -108,6 +125,9 @@ class CRS(Node):
             temp += X.VNFs_resource[vnf]["cpu"]
         return temp/len(X.r.VNFs)
     
+    def GetSurrogateOutput(self, X):
+        return X.CRS
+    
 # average of max_Mem that can be used in server of request
 
 class MRS(Node):
@@ -124,7 +144,10 @@ class MRS(Node):
         temp = 0
         for vnf in X.r.VNFs:
             temp += X.VNFs_resource[vnf]["mem"]
-        return temp/len(X.r.VNFs)  
+        return temp/len(X.r.VNFs) 
+
+    def GetSurrogateOutput(self, X):
+        return X.MRS 
     
 
 # max_delay in server of request
@@ -142,6 +165,9 @@ class MDR(Node):
         for vnf in X.r.VNFs:
             temp += X.VNF_max_delay[vnf]
         return temp  
+    
+    def GetSurrogateOutput(self, X):
+        return X.MDR
     
     
 class Rand(Node):
@@ -167,6 +193,8 @@ class Const(Node):
         return 20
     def GetOutput(self, X):
         return 1
+    def GetSurrogateOutput(self, X):
+        return X.Con
     
 # push_back number of request
 class PN(Node):
@@ -180,6 +208,8 @@ class PN(Node):
         return 21
     def GetOutput(self, X):
         return X.r.push_number
+    def GetSurrogateOutput(self, X):
+        return X.PN
 
 class FIFO_DD(Node):
     def __init__(self):
@@ -222,6 +252,8 @@ class RCSe(Node):
         return 24
     def GetOutput(self, X):
         return X.server_state["cpu"]
+    def GetSurrogateOutput(self, X):
+        return X.RCSe
     
 # The remain of RAM in server
 class RRSe(Node):
@@ -235,6 +267,8 @@ class RRSe(Node):
         return 25
     def GetOutput(self, X):
         return X.server_state["ram"]
+    def GetSurrogateOutput(self, X):
+        return X.RRSe
     
 # The remain of Mem in server
 class  RMSe(Node):
@@ -248,6 +282,8 @@ class  RMSe(Node):
         return 26
     def GetOutput(self, X):
         return X.server_state["mem"]
+    def GetSurrogateOutput(self, X):
+        return X.RMSe
     
 # Maximun link utilization of path to server
 class MLU(Node):
@@ -260,6 +296,8 @@ class MLU(Node):
     def getSymbol(self):
         return 27
     def GetOutput(self, X):
+        return X.MLU
+    def GetSurrogateOutput(self, X):
         return X.MLU
     
 # The cost of server
@@ -274,6 +312,8 @@ class CS(Node):
         return 28
     def GetOutput(self, X):
         return X.cost
+    def GetSurrogateOutput(self, X):
+        return X.CS
 
 
 # The max delay to server
@@ -288,6 +328,8 @@ class DS(Node):
         return 29
     def GetOutput(self, X):
         return X.delay
+    def GetSurrogateOutput(self, X):
+        return X.DS
 # The max utilization of CPU in server
 class MUC(Node):
     def __init__(self):
@@ -302,6 +344,8 @@ class MUC(Node):
         return 30
     def GetOutput(self, X):
         return 1-X.MRU["cpu"]
+    def GetSurrogateOutput(self, X):
+        return X.MUC
 
 # The max utilization of RAM in server
 class MUR(Node):
@@ -317,6 +361,8 @@ class MUR(Node):
 
     def GetOutput(self, X):
         return 1-X.MRU["ram"]
+    def GetSurrogateOutput(self, X):
+        return X.MUR
         
 # The max utilization of Mem in server
 class MUM(Node):
@@ -331,6 +377,8 @@ class MUM(Node):
         return 32
     def GetOutput(self, X):
         return 1-X.MRU["mem"]
+    def GetSurrogateOutput(self, X):
+        return X.MUM
     
     
 class MinCost(Node):
