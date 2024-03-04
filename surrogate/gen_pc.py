@@ -37,11 +37,11 @@ class Server_Surrogate:
         self.RRSe = random.uniform(0,100)
         self.RMSe = random.uniform(0,100)
         self.MLU = random.random()
-        self.CS = random.uniform(0,500)
+        self.CS = random.random()
         self.DS = random.uniform(0,100)
-        self.MUC = random.random()
-        self.MUR = random.random()
-        self.MUM = random.random()
+        self.MUC = random.random()/3
+        self.MUR = random.random()/3
+        self.MUM = random.random()/3
         self.Con = random.random()
 
 class Ref_Rule:

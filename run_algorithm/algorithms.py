@@ -73,10 +73,15 @@ def run_NSGAII( data_path, processing_num, num_train,
     with open(front_file_name, 'w') as file:
         json.dump(tree_json, file)
     
-    test_objectives = []
+    pool = multiprocessing.Pool(processes=processing_num)
+    arg = []
     for indi in Pareto_front_generations[-1]:
+        arg.append((indi, network, request_list, vnf_list))
+    result = pool.starmap(calFitness, arg)
+    test_objectives = []
+    for value in result:
         objectives_temp= {}
-        normal_reject, normal_cost, reject, cost, history = calFitness(indi, network, request_test, vnf_list)
+        normal_reject, normal_cost, reject, cost, history = value
         objectives_temp["normal_reject"] = normal_reject
         objectives_temp["normal_cost"] = normal_cost
         objectives_temp["reject"] = reject
@@ -85,6 +90,7 @@ def run_NSGAII( data_path, processing_num, num_train,
     test_objectives_json = {}
     test_objectives_json["test_result"] = test_objectives
     test_objectives_json["time_train"] = time_end - time_start
+    pool.close()
 
     test_file_name = "./Test_result/NSGAII/"+ str(day) +"_" + data_path[11:-5] + ".json"
     with open(test_file_name, 'w') as file:
@@ -155,10 +161,15 @@ def run_MOEAD(data_path, processing_num, num_train,
     with open(front_file_name, 'w') as file:
         json.dump(tree_json, file)
     
-    test_objectives = []
+    pool = multiprocessing.Pool(processes=processing_num)
+    arg = []
     for indi in Pareto_front_generations[-1]:
+        arg.append((indi, network, request_list, vnf_list))
+    result = pool.starmap(calFitness, arg)
+    test_objectives = []
+    for value in result:
         objectives_temp= {}
-        normal_reject, normal_cost, reject, cost, history = calFitness(indi, network, request_test, vnf_list)
+        normal_reject, normal_cost, reject, cost, history = value
         objectives_temp["normal_reject"] = normal_reject
         objectives_temp["normal_cost"] = normal_cost
         objectives_temp["reject"] = reject
@@ -167,6 +178,7 @@ def run_MOEAD(data_path, processing_num, num_train,
     test_objectives_json = {}
     test_objectives_json["test_result"] = test_objectives
     test_objectives_json["time_train"] = time_end - time_start
+    pool.close()
 
     test_file_name = "./Test_result/MOEAD/"+ str(day) +"_" + data_path[11:-5] + ".json"
     with open(test_file_name, 'w') as file:
@@ -238,10 +250,15 @@ def run_SurrogateNSGAII(data_path, processing_num, num_train,
     with open(front_file_name, 'w') as file:
         json.dump(tree_json, file)
 
-    test_objectives = []
+    pool = multiprocessing.Pool(processes=processing_num)
+    arg = []
     for indi in Pareto_front_generations[-1]:
+        arg.append((indi, network, request_list, vnf_list))
+    result = pool.starmap(calFitness, arg)
+    test_objectives = []
+    for value in result:
         objectives_temp= {}
-        normal_reject, normal_cost, reject, cost, history = calFitness(indi, network, request_test, vnf_list)
+        normal_reject, normal_cost, reject, cost, history = value
         objectives_temp["normal_reject"] = normal_reject
         objectives_temp["normal_cost"] = normal_cost
         objectives_temp["reject"] = reject
@@ -250,6 +267,7 @@ def run_SurrogateNSGAII(data_path, processing_num, num_train,
     test_objectives_json = {}
     test_objectives_json["test_result"] = test_objectives
     test_objectives_json["time_train"] = time_end - time_start
+    pool.close()
 
     test_file_name = "./Test_result/Surrogate/"+ str(day) +"_" + data_path[11:-5] + ".json"
     with open(test_file_name, 'w') as file:
@@ -320,10 +338,15 @@ def run_SPEA( data_path, processing_num, num_train,
     with open(front_file_name, 'w') as file:
         json.dump(tree_json, file)
     
-    test_objectives = []
+    pool = multiprocessing.Pool(processes=processing_num)
+    arg = []
     for indi in Pareto_front_generations[-1]:
+        arg.append((indi, network, request_list, vnf_list))
+    result = pool.starmap(calFitness, arg)
+    test_objectives = []
+    for value in result:
         objectives_temp= {}
-        normal_reject, normal_cost, reject, cost, history = calFitness(indi, network, request_test, vnf_list)
+        normal_reject, normal_cost, reject, cost, history = value
         objectives_temp["normal_reject"] = normal_reject
         objectives_temp["normal_cost"] = normal_cost
         objectives_temp["reject"] = reject
@@ -332,6 +355,7 @@ def run_SPEA( data_path, processing_num, num_train,
     test_objectives_json = {}
     test_objectives_json["test_result"] = test_objectives
     test_objectives_json["time_train"] = time_end - time_start
+    pool.close()
 
     test_file_name = "./Test_result/SPEA/"+ str(day) +"_" + data_path[11:-5] + ".json"
     with open(test_file_name, 'w') as file:

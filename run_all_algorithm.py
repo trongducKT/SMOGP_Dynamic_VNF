@@ -26,7 +26,7 @@ if __name__ == '__main__':
     #             2, 8, 4, 2, 0.8, 0.9, 0.1, 
     #             reproduction, random_init, natural_selection, calFitness)
 
-    num_pro = 90
+    num_pro = 2
     num_train = 10
     pop_size = 80
     max_gen = 50
