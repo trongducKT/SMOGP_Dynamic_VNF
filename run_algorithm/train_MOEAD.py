@@ -59,22 +59,22 @@ class MOGPDPopulation(Population):
             part_crossover = np.random.rand()
             # determining tree crossover
             if part_crossover < 1 / 3:
-                o1 = self.crossover_operator(individual1.determining_tree, individual2.determining_tree, self.max_height)
+                o1 = self.crossover_operator(individual1.determining_tree, individual2.determining_tree, self.min_height, self.max_height)
                 height1 = o1.GetHeight()
                 if self.min_height <= height1 <= self.max_height:
                     return Individual(o1, individual1.choosing_tree)
             # choosing tree crossover
             elif part_crossover > 2 / 3:
-                o1 = self.crossover_operator(individual1.choosing_tree, individual2.choosing_tree, self.max_height)
+                o1 = self.crossover_operator(individual1.choosing_tree, individual2.choosing_tree, self.min_height, self.max_height)
                 height2 = o1.GetHeight()
                 if self.min_height <= height2 <= self.max_height:
                     return Individual(individual1.determining_tree, o1)
             # both trees crossover
             else:
-                o1 = self.crossover_operator(individual1.determining_tree, individual2.determining_tree, self.max_height)
+                o1 = self.crossover_operator(individual1.determining_tree, individual2.determining_tree,self.min_height, self.max_height)
                 height1 = o1.GetHeight()
                 if self.min_height <= height1 <= self.max_height:
-                    o2 = self.crossover_operator(individual1.choosing_tree, individual2.choosing_tree, self.max_height)
+                    o2 = self.crossover_operator(individual1.choosing_tree, individual2.choosing_tree,self.min_height, self.max_height)
                     height2 = o2.GetHeight()
                     if self.min_height <= height2 <= self.max_height:
                         return Individual(o1, o2)
