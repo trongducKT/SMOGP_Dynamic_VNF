@@ -1,3 +1,6 @@
+from gp.population.individual import Individual
+import random
+
 def ranking_index(value_list):
     sorted_list = sorted(value_list, reverse=True)
     index_list = []
@@ -13,10 +16,6 @@ def ranking_index(value_list):
                     index_list.append(i+1)
                     break
     return index_list
-
-
-from .gp.population.individual import Individual
-import random
 
 class Request_Surrogate:
     def __init__(self):
@@ -54,7 +53,7 @@ class Ref_Rule:
 class Surrogate:
     def __init__(self, number_situations, ref_rule: Ref_Rule):
         self.number_situations = number_situations
-        self.ref_individual = ref_rule
+        self.ref_rule = ref_rule
         self.ordered_situations = None
         self.server_situations = None
         self.determining_ref = None
@@ -72,7 +71,8 @@ class Surrogate:
             server_list = [Server_Surrogate() for i in range(servers_num)]
             self.ordered_situations.append(request_list)
             self.server_situations.append(server_list)
-    
+        self.cal_ref_rule()
+
     def cal_ref_rule(self):
         self.determining_ref = []
         self.choosing_ref = []
@@ -83,6 +83,7 @@ class Surrogate:
             choosing_index = choosing_priority.index(max(choosing_priority))
             self.determining_ref.append(determining_index)
             self.choosing_ref.append(choosing_index)
+        # print(self.determining_ref, self.choosing_ref)
 
     def cal_pc(self, individual: Individual):
         determining_pc = []
@@ -90,9 +91,10 @@ class Surrogate:
         for i in range(self.number_situations):
             determining_priority = [individual.determining_tree.GetSurrogateOutput(request) for request in self.ordered_situations[i]]
             choosing_priority = [individual.choosing_tree.GetSurrogateOutput(server) for server in self.server_situations[i]]
+            # print(determining_priority, choosing_priority)
             determining_rank = ranking_index(determining_priority)
             choosing_rank = ranking_index(choosing_priority)
+            # print(determining_rank, choosing_rank)
             determining_pc.append(determining_rank[self.determining_ref[i]])
             choosing_pc.append(choosing_rank[self.choosing_ref[i]])
-        pc = determining_pc.extends(choosing_pc)
-        return pc
+        return determining_pc + choosing_pc

@@ -96,15 +96,16 @@ def GenerateRandomTree(functions, terminals, max_height, curr_height=0, method='
             n.AppendChild( c ) # do not use n.children.append because that won't set the n as parent node of c
     return n
 
-def mutation(individual,functions, terminals, min_height, max_height ):
+# Tree  branch replace mutation
+def mutation_tree_branch_replace(tree, functions, terminals, min_height, max_height ):
     
-    nodes = individual.GetSubtree()
+    nodes = tree.GetSubtree()
     nodes, chosen_depth = __GetCandidateNodesAtUniformRandomDepth(nodes, max_height )
     to_replace = nodes[randint(len(nodes))]
     
     if not to_replace.parent:
         mutation_branch = GenerateRandomTree(functions, terminals, max_height, min_height = min_height )
-        del individual
+        del tree
         return mutation_branch
 
     if chosen_depth == max_height:
@@ -117,12 +118,49 @@ def mutation(individual,functions, terminals, min_height, max_height ):
     idx = p.DetachChild(to_replace)
         
     p.InsertChildAtPosition(idx, mutation_branch)
-    return individual
+    return tree
+
+# Tree node replace mutation
+def mutation_tree_node_replace(tree, functions, terminals, min_height, max_height):
+    node_identifier = set()
+    for node in functions:
+        node_identifier.add(node.getSymbol())
+    nodes = tree.GetSubtree()
+    random_node = nodes[randint(len(nodes))]
+    p = random_node.parent
+    if random_node.getSymbol() in node_identifier:
+        temp = functions[randint(len(functions))]
+        while temp.getSymbol() == random_node.getSymbol():
+            temp = functions[randint(len(functions))]
+        replace_node = deepcopy(temp)
+        
+        child1 = deepcopy(random_node._children[0])
+        child2 = deepcopy(random_node._children[1])
+        replace_node.AppendChild(child1)
+        replace_node.AppendChild(child2)
+        if p != None:
+            idx = p.DetachChild(random_node)
+            p.InsertChildAtPosition(idx, replace_node)
+        else:
+            del tree
+            return replace_node
+
+    else:
+        temp = terminals[randint(len(terminals))]
+        while temp.getSymbol() == random_node.getSymbol():
+            temp = terminals[randint(len(terminals))]
+        replace_node = deepcopy(temp)
+    
+        idx = p.DetachChild(random_node)
+        p.InsertChildAtPosition(idx, replace_node)
+    return tree
 
 
-def crossover(individual, donor, max_height):
-    individual = deepcopy(individual)
-    nodes1_subtree = individual.GetSubtree()
+
+# Tree crossover
+def crossover_tree_branch_swap(tree, donor, max_height):
+    tree = deepcopy(tree)
+    nodes1_subtree = tree.GetSubtree()
     nodes2_subtree = donor.GetSubtree()	# no need to deep copy all nodes of parent2
     nodes1, depth_node1 = __GetCandidateNodesAtUniformRandomDepth( nodes1_subtree, max_height )
     nodes2, depth_node2 = __GetCandidateNodesAtUniformRandomDepth_crossover( nodes2_subtree, max_height - 
@@ -144,7 +182,7 @@ def crossover(individual, donor, max_height):
     idx = p1.DetachChild(to_swap1)
     p1.InsertChildAtPosition(idx, to_swap2)
 
-    return individual
+    return tree
 
 
 def __GetCandidateNodesAtUniformRandomDepth(nodes, max_height_thereshold):
@@ -172,78 +210,6 @@ def __GetCandidateNodesAtUniformRandomDepth_crossover(nodes, max_height_theresho
     candidates = [x for x in nodes if x.GetHeight() == chosen_height]
 
     return candidates, chosen_height
-
-def reproduction(pop):
-    print(pop.min_height, pop.max_height)
-    O = []
-    for _ in range( pop.pop_size ):
-        # individual1_index = self.tournament_selection(-1)
-        # individual2_index = self.tournament_selection(individual1_index)
-
-        # individual1 = deepcopy(self.indivs[individual1_index])
-        # individual2 = deepcopy(self.indivs[individual2_index])
-        individual1, individual2 = random.sample(pop.indivs, 2)
-        
-        SD = np.linalg.norm(individual1.objectives - individual2.objectives)
-        print("SD", SD)
-        # crossover
-        # if ( np.random.rand() < self.crossover_rate ):
-        if ( SD > 0.1 ):
-            part_crossover = np.random.rand()
-            # determining tree crossover
-            if part_crossover < 1/3:
-                o1 = crossover(individual1.determining_tree, individual2.determining_tree, pop.max_height)
-                height1 = o1.GetHeight()
-                if height1 >= pop.min_height and height1 <= pop.max_height:
-                    O.append(Individual(o1, individual1.choosing_tree))
-            # choosing tree crossover
-            elif part_crossover > 2/3:
-                o1 = crossover(individual1.choosing_tree, individual2.choosing_tree, pop.max_height)
-                height2 = o1.GetHeight()
-                if height2 >= pop.min_height and height2 <= pop.max_height:
-                    O.append(Individual(individual1.determining_tree, o1))
-            # both trees crossover
-            else:
-                o1 = crossover(individual1.determining_tree, individual2.determining_tree, pop.max_height)
-                height1 = o1.GetHeight()
-                if height1 >= pop.min_height and height1 <= pop.max_height:
-                    o2 = crossover(individual1.choosing_tree, individual2.choosing_tree, pop.max_height)
-                    height2 = o2.GetHeight()
-                    if height2 >= pop.min_height and height2 <= pop.max_height:
-                        O.append(Individual(o1, o2))
-
-        # mutation
-        # if ( np.random.rand() < self.mutation_rate ):
-        if ( SD < 0.1 ):
-            part_mutation = np.random.rand()
-            # determining tree mutation
-            if part_mutation < 1/3:
-                o = mutation(individual1.determining_tree, pop.functions, pop.determining_terminals, pop.min_height, pop.max_height)
-                height1 = o.GetHeight()
-                if height1 >= pop.min_height and height1 <= pop.max_height:
-                    O.append(Individual(o, individual1.choosing_tree))
-            # choosing tree mutation
-            elif part_mutation > 2/3:
-                o = mutation(individual1.choosing_tree, pop.functions, pop.choosing_terminals, pop.min_height, pop.max_height)
-                height2 = o.GetHeight()
-                if height2 >= pop.min_height and height2 <= pop.max_height:
-                    O.append(Individual(individual1.determining_tree, o))
-            # both trees mutation
-            else:
-                o1 = mutation(individual1.determining_tree, pop.functions, pop.determining_terminals, pop.min_height, pop.max_height)
-                height1 = o1.GetHeight()
-                if height1 >= pop.min_height and height1 <= pop.max_height:
-                    o2 = mutation(individual1.choosing_tree, pop.functions, pop.choosing_terminals, pop.min_height, pop.max_height)
-                    height2 = o2.GetHeight()
-                    if height2 >= pop.min_height and height2 <= pop.max_height:
-                        O.append(Individual(o1, o2))    
-        # reproduction
-        if(np.random.rand() < 0.15):
-            tree1 = GenerateRandomTree(pop.functions, pop.determining_terminals, pop.max_height, min_height = pop.min_height )
-            tree2 = GenerateRandomTree(pop.functions, pop.choosing_terminals, pop.max_height, min_height = pop.min_height )
-            O.append(Individual(tree1, tree2))
-    return O
-
 
 def tournament_selection(pop, remove_position):
     index_list = list(np.arange(len(pop.indivs)))
@@ -273,6 +239,93 @@ def natural_selection(pop):
     new_fronts.append(pop.ParetoFront[front_num][0:pop.pop_size - len(new_indivs)])
     pop.ParetoFront = new_fronts
     pop.indivs = new_indivs
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+def reproduction(pop):
+    print(pop.min_height, pop.max_height)
+    O = []
+    for _ in range( pop.pop_size ):
+        # individual1_index = self.tournament_selection(-1)
+        # individual2_index = self.tournament_selection(individual1_index)
+
+        # individual1 = deepcopy(self.indivs[individual1_index])
+        # individual2 = deepcopy(self.indivs[individual2_index])
+        individual1, individual2 = random.sample(pop.indivs, 2)
+        
+        SD = np.linalg.norm(individual1.objectives - individual2.objectives)
+        print("SD", SD)
+        # crossover
+        # if ( np.random.rand() < self.crossover_rate ):
+        if ( SD > 0.1 ):
+            part_crossover = np.random.rand()
+            # determining tree crossover
+            if part_crossover < 1/3:
+                o1 = crossover_tree_branch_swap(individual1.determining_tree, individual2.determining_tree, pop.max_height)
+                height1 = o1.GetHeight()
+                if height1 >= pop.min_height and height1 <= pop.max_height:
+                    O.append(Individual(o1, individual1.choosing_tree))
+            # choosing tree crossover
+            elif part_crossover > 2/3:
+                o1 = crossover_tree_branch_swap(individual1.choosing_tree, individual2.choosing_tree, pop.max_height)
+                height2 = o1.GetHeight()
+                if height2 >= pop.min_height and height2 <= pop.max_height:
+                    O.append(Individual(individual1.determining_tree, o1))
+            # both trees crossover
+            else:
+                o1 = crossover_tree_branch_swap(individual1.determining_tree, individual2.determining_tree, pop.max_height)
+                height1 = o1.GetHeight()
+                if height1 >= pop.min_height and height1 <= pop.max_height:
+                    o2 = crossover_tree_branch_swap(individual1.choosing_tree, individual2.choosing_tree, pop.max_height)
+                    height2 = o2.GetHeight()
+                    if height2 >= pop.min_height and height2 <= pop.max_height:
+                        O.append(Individual(o1, o2))
+
+        # mutation
+        # if ( np.random.rand() < self.mutation_rate ):
+        if ( SD < 0.1 ):
+            part_mutation = np.random.rand()
+            # determining tree mutation
+            if part_mutation < 1/3:
+                o = mutation_tree_branch_replace(individual1.determining_tree, pop.functions, pop.determining_terminals, pop.min_height, pop.max_height)
+                height1 = o.GetHeight()
+                if height1 >= pop.min_height and height1 <= pop.max_height:
+                    O.append(Individual(o, individual1.choosing_tree))
+            # choosing tree mutation
+            elif part_mutation > 2/3:
+                o = mutation_tree_branch_replace(individual1.choosing_tree, pop.functions, pop.choosing_terminals, pop.min_height, pop.max_height)
+                height2 = o.GetHeight()
+                if height2 >= pop.min_height and height2 <= pop.max_height:
+                    O.append(Individual(individual1.determining_tree, o))
+            # both trees mutation
+            else:
+                o1 = mutation_tree_branch_replace(individual1.determining_tree, pop.functions, pop.determining_terminals, pop.min_height, pop.max_height)
+                height1 = o1.GetHeight()
+                if height1 >= pop.min_height and height1 <= pop.max_height:
+                    o2 = mutation_tree_branch_replace(individual1.choosing_tree, pop.functions, pop.choosing_terminals, pop.min_height, pop.max_height)
+                    height2 = o2.GetHeight()
+                    if height2 >= pop.min_height and height2 <= pop.max_height:
+                        O.append(Individual(o1, o2))    
+        # reproduction
+        if(np.random.rand() < 0.15):
+            tree1 = GenerateRandomTree(pop.functions, pop.determining_terminals, pop.max_height, min_height = pop.min_height )
+            tree2 = GenerateRandomTree(pop.functions, pop.choosing_terminals, pop.max_height, min_height = pop.min_height )
+            O.append(Individual(tree1, tree2))
+    return O
+
+
 
 
 def reproduction1(pop):

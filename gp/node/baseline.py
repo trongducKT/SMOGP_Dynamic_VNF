@@ -21,6 +21,9 @@ class Node:	# Base class with general functionalities
 		self._children.append(N)
 		N.parent = self
 
+	def RemoveChild(self):
+		self._children = []
+
 	def DetachChild( self, N ):
 		assert(N in self._children)
 		for i, c in enumerate(self._children):

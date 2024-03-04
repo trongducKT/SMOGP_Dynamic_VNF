@@ -5,10 +5,12 @@ class Individual:
         self.choosing_tree = choosing_tree
         self.objectives = np.zeros(2)
         self.rank = None
+        self.rank_crowding_distance = None
         self.crowding_distance = None
         self.domination_count = None # be dominated
         self.dominated_solutions = None # dominate
         self.pc = []
+        self.F = None
     # Dominate operator
     def dominates(self, other_individual):
         and_condition = True

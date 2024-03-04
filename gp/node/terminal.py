@@ -437,3 +437,16 @@ class Scale(Node):
     def GetOutput(self, X):
         return 1 
     
+class Zero_Node(Node):
+    def __init__(self):
+        super(Zero_Node, self).__init__()
+    def __repr__(self):
+        return "Zero_Node"
+    def _GetHumanExpressionSpecificNode(self, args):
+        return "Zero_Node"
+    def getSymbol(self):
+        return 37
+    def GetOutput(self, X):
+        return 0
+    def GetSurrogateOutput(self, X):
+        return 0

@@ -26,16 +26,16 @@ if __name__ == '__main__':
     #             2, 8, 4, 2, 0.8, 0.9, 0.1, 
     #             reproduction, random_init, natural_selection, calFitness)
 
-    num_pro = 10
+    num_pro = 90
     num_train = 10
-    pop_size = 10
-    max_gen = 10
+    pop_size = 80
+    max_gen = 50
     min_height = 2
     max_height = 8
     initialization_max_height = 4
     num_of_tour_particips = 2
     tournament_prob = 0.8
-    pc = 0.8
+    pc = 0.9
     pm = 0.1
     node1 = SubNode()
     node1.AppendChild(PN())
@@ -61,35 +61,41 @@ if __name__ == '__main__':
     surrogate = Surrogate(20, rule_ref)
     surrogate.gen_situations(10, 50, 10, 20)
     neighborhood_size = 3
-    data_set = [r'./data_1_9/nsf_centers_easy_s3.json', 
-                r'./data_1_9/nsf_centers_hard_s3.json', 
-                r'./data_1_9/nsf_centers_normal_s3.json',
-                r'./data_1_9/nsf_rural_easy_s3.json', 
-                r'./data_1_9/nsf_rural_hard_s3.json', 
-                r'./data_1_9/nsf_rural_normal_s3.json', 
-                r'./data_1_9/nsf_uniform_easy_s3.json', 
-                r'./data_1_9/nsf_uniform_hard_s3.json', 
-                r'./data_1_9/nsf_uniform_normal_s3.json', 
-                r'./data_1_9/nsf_urban_easy_s3.json', 
-                r'./data_1_9/nsf_urban_hard_s3.json',
-                r'./data_1_9/nsf_urban_normal_s3.json']
+    data_set = [r'./data_1_9/conus_centers_easy_s3.json', 
+                r'./data_1_9/conus_centers_hard_s3.json', 
+                r'./data_1_9/conus_centers_normal_s3.json',
+                r'./data_1_9/conus_rural_easy_s3.json', 
+                r'./data_1_9/conus_rural_hard_s3.json', 
+                r'./data_1_9/conus_rural_normal_s3.json', 
+                r'./data_1_9/conus_uniform_easy_s3.json', 
+                r'./data_1_9/conus_uniform_hard_s3.json', 
+                r'./data_1_9/conus_uniform_normal_s3.json', 
+                r'./data_1_9/conus_urban_easy_s3.json', 
+                r'./data_1_9/conus_urban_hard_s3.json',
+                r'./data_1_9/conus_urban_normal_s3.json']
     for data_path in data_set:
-        a = run_SPEA( data_path, num_pro, num_train,  
+        run_SurrogateNSGAII(data_path, num_pro, num_train,  
+        function, terminal_decision, terminal_choosing, 
+        pop_size, max_gen,  min_height, max_height, initialization_max_height,  
+        num_of_tour_particips, tournament_prob, pc, pm,
+        [crossover_branch_individual_swap], [mutation_individual_branch_replace, mutation_individual_node_replace], 3, surrogate, rule_ref,
+        calFitness_removeGPvalue)
+        run_NSGAII( data_path, num_pro, num_train,  
                     function, terminal_decision, terminal_choosing, 
                     pop_size, max_gen,  min_height, max_height, initialization_max_height,  
                     num_of_tour_particips, tournament_prob, pc, pm,
                     random_init, crossover_branch_individual_swap, mutation_individual_branch_replace, natural_selection,
-                    calFitness)
-        # a = run_MOEAD(data_path, num_pro, num_train,  
-        #             function, terminal_decision, terminal_choosing, 
-        #             pop_size, max_gen,  min_height, max_height, initialization_max_height,  
-        #             pc, pm, random_init, crossover, mutation, natural_selection,
-        #             neighborhood_size,
-        #             calFitness)
-        # a = run_SurrogateNSGAII(data_path, num_pro, num_train,  
-        #         function, terminal_decision, terminal_choosing, 
-        #         pop_size, max_gen,  min_height, max_height, initialization_max_height,  
-        #         num_of_tour_particips, tournament_prob, pc, pm,
-        #         [crossover_branch_individual_swap], [mutation_individual_branch_replace, mutation_individual_node_replace], 3, surrogate, rule_ref,
-        #         calFitness)
+                    calFitness_removeGPvalue)
+        run_MOEAD(data_path, num_pro, num_train,  
+                    function, terminal_decision, terminal_choosing, 
+                    pop_size, max_gen,  min_height, max_height, initialization_max_height,  
+                    pc, pm, random_init, crossover_branch_individual_swap, mutation_individual_branch_replace, natural_selection,
+                    neighborhood_size,
+                    calFitness_removeGPvalue)
+        run_SPEA( data_path, num_pro, num_train,  
+                    function, terminal_decision, terminal_choosing, 
+                    pop_size, max_gen,  min_height, max_height, initialization_max_height,  
+                    num_of_tour_particips, tournament_prob, pc, pm,
+                    random_init, crossover_branch_individual_swap, mutation_individual_branch_replace, natural_selection,
+                    calFitness_removeGPvalue)
     
