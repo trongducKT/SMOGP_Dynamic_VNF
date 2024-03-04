@@ -48,7 +48,9 @@ class MOGPDPopulation(Population):
         O = []
         for i in range(self.pop_size):
             i1, i2 = random.sample(self.neighborhoods[i].tolist(), 2)
-            O.append(self.pair_reproduction(self.indivs[i1], self.indivs[i2]))
+            child1, child2 = self.pair_reproduction(self.indivs[i1], self.indivs[i2])
+            if child1 is not None:
+                O.extend([child1, child2])
         return O
 
     def pair_reproduction(self, individual1, individual2):
@@ -56,64 +58,21 @@ class MOGPDPopulation(Population):
 
         # crossover
         if operator_prob < self.crossover_rate:
-            part_crossover = np.random.rand()
-            # determining tree crossover
-            if part_crossover < 1 / 3:
-                o1 = self.crossover_operator(individual1.determining_tree, individual2.determining_tree, self.min_height, self.max_height)
-                height1 = o1.GetHeight()
-                if self.min_height <= height1 <= self.max_height:
-                    return Individual(o1, individual1.choosing_tree)
-            # choosing tree crossover
-            elif part_crossover > 2 / 3:
-                o1 = self.crossover_operator(individual1.choosing_tree, individual2.choosing_tree, self.min_height, self.max_height)
-                height2 = o1.GetHeight()
-                if self.min_height <= height2 <= self.max_height:
-                    return Individual(individual1.determining_tree, o1)
-            # both trees crossover
-            else:
-                o1 = self.crossover_operator(individual1.determining_tree, individual2.determining_tree,self.min_height, self.max_height)
-                height1 = o1.GetHeight()
-                if self.min_height <= height1 <= self.max_height:
-                    o2 = self.crossover_operator(individual1.choosing_tree, individual2.choosing_tree,self.min_height, self.max_height)
-                    height2 = o2.GetHeight()
-                    if self.min_height <= height2 <= self.max_height:
-                        return Individual(o1, o2)
-
+            o1, o2 = self.crossover_operator(individual1, individual2, self.min_height, self.max_height)
+            return o1, o2
         # mutation
         elif operator_prob <self.mutation_rate + self.mutation_rate:
-            part_mutation = np.random.rand()
-            # determining tree mutation
-            if part_mutation < 1 / 3:
-                o = self.mutation_operator(individual1.determining_tree, self.functions, self.determining_terminals,
-                             self.min_height, self.max_height)
-                height1 = o.GetHeight()
-                if self.min_height <= height1 <= self.max_height:
-                    return Individual(o, individual1.choosing_tree)
-            # choosing tree mutation
-            elif part_mutation > 2 / 3:
-                o = self.mutation_operator(individual1.choosing_tree, self.functions, self.choosing_terminals,
-                             self.min_height, self.max_height)
-                height2 = o.GetHeight()
-                if self.min_height <= height2 <= self.max_height:
-                    return Individual(individual1.determining_tree, o)
-            # both trees mutation
-            else:
-                o1 = self.mutation_operator(individual1.determining_tree, self.functions, self.determining_terminals,
-                              self.min_height, self.max_height)
-                height1 = o1.GetHeight()
-                if self.min_height <= height1 <= self.max_height:
-                    o2 = self.mutation_operator(individual1.choosing_tree, self.functions, self.choosing_terminals,
-                                  self.min_height, self.max_height)
-                    height2 = o2.GetHeight()
-                    if self.min_height <= height2 <= self.max_height:
-                        return Individual(o1, o2)
-
-        # reproduction
-        tree1 = GenerateRandomTree(self.functions, self.determining_terminals,
-                                   self.max_height, min_height=self.min_height)
-        tree2 = GenerateRandomTree(self.functions, self.choosing_terminals,
-                                   self.max_height, min_height=self.min_height)
-        return Individual(tree1, tree2)
+            o1 = self.mutation_operator(individual1, self.functions, self.determining_terminals,
+                                        self.choosing_terminals, self.min_height, self.max_height)
+            o2 = self.mutation_operator(individual2, self.functions, self.determining_terminals,
+                                        self.choosing_terminals, self.min_height, self.max_height)
+            return o1, o2
+        # # reproduction
+        # tree1 = GenerateRandomTree(self.functions, self.determining_terminals,
+        #                            self.max_height, min_height=self.min_height)
+        # tree2 = GenerateRandomTree(self.functions, self.choosing_terminals,
+        #                            self.max_height, min_height=self.min_height)
+        return None, None
 
     def natural_selection(self):
         self.indivs, O = self.indivs[:self.pop_size], self.indivs[self.pop_size:]

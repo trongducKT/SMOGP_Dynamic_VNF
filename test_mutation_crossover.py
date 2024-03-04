@@ -29,7 +29,7 @@ if __name__ == '__main__':
     num_pro = 10
     num_train = 10
     pop_size = 10
-    max_gen = 10
+    max_gen = 2
     min_height = 2
     max_height = 8
     initialization_max_height = 4
@@ -74,12 +74,12 @@ if __name__ == '__main__':
                 r'./data_1_9/nsf_urban_hard_s3.json',
                 r'./data_1_9/nsf_urban_normal_s3.json']
     for data_path in data_set:
-        a = run_SPEA( data_path, num_pro, num_train,  
+        run_MOEAD(data_path, num_pro, num_train,  
                     function, terminal_decision, terminal_choosing, 
                     pop_size, max_gen,  min_height, max_height, initialization_max_height,  
-                    num_of_tour_particips, tournament_prob, pc, pm,
-                    random_init, crossover_branch_individual_swap, mutation_individual_branch_replace, natural_selection,
-                    calFitness)
+                    pc, pm, random_init, crossover_branch_individual_swap, mutation_individual_branch_replace, natural_selection,
+                    neighborhood_size,
+                    calFitness_removeGPvalue)
         # a = run_MOEAD(data_path, num_pro, num_train,  
         #             function, terminal_decision, terminal_choosing, 
         #             pop_size, max_gen,  min_height, max_height, initialization_max_height,  
