@@ -7,6 +7,7 @@ from deployment.evaluation import calFitness, calFitness_removeGPvalue
 from surrogate.gen_pc import *
 from utils.crossover import *
 from utils.mutation import *
+from run_algorithm.train_Surrogate_NSGA_II import SurrogateNSGAPopulation
 
 if __name__ == '__main__':
     multiprocessing.freeze_support()
@@ -26,10 +27,10 @@ if __name__ == '__main__':
     #             2, 8, 4, 2, 0.8, 0.9, 0.1, 
     #             reproduction, random_init, natural_selection, calFitness)
 
-    num_pro = 2
+    num_pro = 10
     num_train = 10
-    pop_size = 80
-    max_gen = 50
+    pop_size = 5
+    max_gen = 4
     min_height = 2
     max_height = 8
     initialization_max_height = 4
@@ -60,7 +61,7 @@ if __name__ == '__main__':
     rule_ref = Ref_Rule(node1, node5)
     surrogate = Surrogate(20, rule_ref)
     surrogate.gen_situations(10, 50, 10, 20)
-    neighborhood_size = 3
+    neighborhood_size = 5
     data_set = [r'./data_1_9/conus_centers_easy_s3.json', 
                 r'./data_1_9/conus_centers_hard_s3.json', 
                 r'./data_1_9/conus_centers_normal_s3.json',
@@ -74,25 +75,31 @@ if __name__ == '__main__':
                 r'./data_1_9/conus_urban_hard_s3.json',
                 r'./data_1_9/conus_urban_normal_s3.json']
     for data_path in data_set:
-        run_SurrogateNSGAII(data_path, num_pro, num_train,  
+
+        pop = SurrogateNSGAPopulation(pop_size, function, terminal_decision, terminal_choosing, min_height,
+                                  max_height, initialization_max_height, num_of_tour_particips, tournament_prob,
+                                  pc, pm, None, None, None, None, None, 
+                                  surrogate, rule_ref, neighborhood_size)
+        pop.random_init()
+        run_SurrogateNSGAII(data_path, num_pro, pop.indivs, num_train,  
         function, terminal_decision, terminal_choosing, 
         pop_size, max_gen,  min_height, max_height, initialization_max_height,  
         num_of_tour_particips, tournament_prob, pc, pm,
         [crossover_branch_individual_swap], [mutation_individual_branch_replace, mutation_individual_node_replace], 3, surrogate, rule_ref,
         calFitness_removeGPvalue)
-        run_NSGAII( data_path, num_pro, num_train,  
+        run_NSGAII( data_path, num_pro, pop.indivs,  num_train,  
                     function, terminal_decision, terminal_choosing, 
                     pop_size, max_gen,  min_height, max_height, initialization_max_height,  
                     num_of_tour_particips, tournament_prob, pc, pm,
                     random_init, crossover_branch_individual_swap, mutation_individual_branch_replace, natural_selection,
                     calFitness_removeGPvalue)
-        run_MOEAD(data_path, num_pro, num_train,  
+        run_MOEAD(data_path, num_pro, pop.indivs, num_train,  
                     function, terminal_decision, terminal_choosing, 
                     pop_size, max_gen,  min_height, max_height, initialization_max_height,  
                     pc, pm, random_init, crossover_branch_individual_swap, mutation_individual_branch_replace, natural_selection,
                     neighborhood_size,
                     calFitness_removeGPvalue)
-        run_SPEA( data_path, num_pro, num_train,  
+        run_SPEA( data_path, num_pro, pop.indivs,  num_train,  
                     function, terminal_decision, terminal_choosing, 
                     pop_size, max_gen,  min_height, max_height, initialization_max_height,  
                     num_of_tour_particips, tournament_prob, pc, pm,

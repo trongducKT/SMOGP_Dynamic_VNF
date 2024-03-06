@@ -1,3 +1,4 @@
+from copy import deepcopy
 class Population:
     def __init__(self, pop_size, functions, determining_terminals, choosing_terminals, 
                  min_height, max_height, initialization_max_tree_height, 
@@ -36,6 +37,11 @@ class Population:
     
     # def mutation(self, individual1):
     #     return self.mutation_operator(individual1)
+    
+    def pre_indi_gen(self, indi_list):
+        if len(indi_list) != self.pop_size:
+            raise ValueError("The length of the list of individuals is not equal to the population size")
+        self.indivs = deepcopy(indi_list)
     
 
     

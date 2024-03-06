@@ -99,7 +99,7 @@ class MOGPDPopulation(Population):
                 self.external_pop.append(indi)
 
 
-def trainMOGPD(processing_number, network, vnf_list, request_list,
+def trainMOGPD(processing_number, indi_list,  network, vnf_list, request_list,
                functions, terminal_determining, terminal_choosing,
                pop_size, max_gen, min_height, max_height, initialization_max_height,
                crossover_rate, mutation_rate, neighborhood_size,
@@ -115,7 +115,8 @@ def trainMOGPD(processing_number, network, vnf_list, request_list,
                             crossover_rate, mutation_rate,  initialize_operator, 
                             crossover_operator, mutation_operator, selection_operator,
                             neighborhood_size)
-    pop.initialize()
+    # pop.initialize()
+    pop.pre_indi_gen(indi_list)
 
     # print("Danh sach ca the khoi tao")
     # for indi in pop.indivs:

@@ -33,7 +33,7 @@ class NSGAPopulation(Population):
                 offspring.extend([mutant1, mutant2])
         return offspring
 
-def trainNSGAII(processing_number, network, vnf_list, request_list,
+def trainNSGAII(processing_number, indi_list,  network, vnf_list, request_list,
                 functions, terminal_determining, terminal_choosing, 
                 pop_size, max_gen,  min_height, max_height, initialization_max_height,  
                 num_of_tour_particips, tournament_prob,crossover_rate, mutation_rate,
@@ -46,8 +46,8 @@ def trainNSGAII(processing_number, network, vnf_list, request_list,
                           min_height, max_height, initialization_max_height,
                           num_of_tour_particips, tournament_prob, crossover_rate, mutation_rate,
                           initialize_operator, crossover_operator, mutation_operator, selection_operator)
-    pop.initialize()
-
+    # pop.initialize()
+    pop.pre_indi_gen(indi_list)
     pool = multiprocessing.Pool(processes=processing_number)
     arg = []
     for indi in pop.indivs:

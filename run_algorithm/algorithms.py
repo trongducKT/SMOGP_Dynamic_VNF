@@ -9,7 +9,7 @@ from .train_Surrogate_NSGA_II import trainSurrogateNSGAII
 from .train_SPEA import *
 
 
-def run_NSGAII( data_path, processing_num, num_train,  
+def run_NSGAII( data_path, processing_num, indi_list, num_train,  
                 functions, terminal_decision, terminal_choosing, 
                 pop_size, max_gen,  min_height, max_height, initialization_max_height,  
                 num_of_tour_particips, tournament_prob,crossover_rate, mutation_rate,
@@ -36,7 +36,7 @@ def run_NSGAII( data_path, processing_num, num_train,
             request_test.append(request)
     time_start = time.time()
     Pareto_front_generations = trainNSGAII(
-                processing_num, network, vnf_list, request_list,
+                processing_num, indi_list,  network, vnf_list, request_list,
                 functions, terminal_decision, terminal_choosing, 
                 pop_size, max_gen,  min_height, max_height, initialization_max_height,  
                 num_of_tour_particips, tournament_prob,crossover_rate, mutation_rate,
@@ -96,7 +96,7 @@ def run_NSGAII( data_path, processing_num, num_train,
     with open(test_file_name, 'w') as file:
         json.dump(test_objectives_json, file)
 
-def run_MOEAD(data_path, processing_num, num_train,  
+def run_MOEAD(data_path, processing_num, indi_list,  num_train,  
                 functions, terminal_determining, terminal_choosing, 
                 pop_size, max_gen,  min_height, max_height, initialization_max_height,  
                 crossover_rate, mutation_rate, 
@@ -124,7 +124,7 @@ def run_MOEAD(data_path, processing_num, num_train,
             request_test.append(request)
 
     time_start = time.time()
-    Pareto_front_generations = trainMOGPD(processing_num, network, vnf_list, request_list,
+    Pareto_front_generations = trainMOGPD(processing_num,indi_list,  network, vnf_list, request_list,
                functions, terminal_determining, terminal_choosing,
                pop_size, max_gen, min_height, max_height, initialization_max_height,
                crossover_rate, mutation_rate, neighborhood_size,
@@ -187,7 +187,7 @@ def run_MOEAD(data_path, processing_num, num_train,
     
 
 
-def run_SurrogateNSGAII(data_path, processing_num, num_train,  
+def run_SurrogateNSGAII(data_path, processing_num,indi_list,  num_train,  
                 functions, terminal_determining, terminal_choosing, 
                 pop_size, max_gen,  min_height, max_height, initialization_max_height,  
                 num_of_tour_particips, tournament_prob,crossover_rate, mutation_rate,
@@ -213,7 +213,7 @@ def run_SurrogateNSGAII(data_path, processing_num, num_train,
         else: 
             request_test.append(request)
     time_start = time.time()
-    Pareto_front_generations = trainSurrogateNSGAII(processing_num, network, vnf_list, request_list,
+    Pareto_front_generations = trainSurrogateNSGAII(processing_num,indi_list,  network, vnf_list, request_list,
                 functions, terminal_determining, terminal_choosing, 
                 pop_size, max_gen,  min_height, max_height, initialization_max_height,  
                 num_of_tour_particips, tournament_prob,crossover_rate, mutation_rate,
@@ -274,7 +274,7 @@ def run_SurrogateNSGAII(data_path, processing_num, num_train,
         json.dump(test_objectives_json, file)
 
 
-def run_SPEA( data_path, processing_num, num_train,  
+def run_SPEA( data_path, processing_num,indi_list,  num_train,  
                 functions, terminal_decision, terminal_choosing, 
                 pop_size, max_gen,  min_height, max_height, initialization_max_height,  
                 num_of_tour_particips, tournament_prob,crossover_rate, mutation_rate,
@@ -301,7 +301,7 @@ def run_SPEA( data_path, processing_num, num_train,
             request_test.append(request)
     time_start = time.time()
     Pareto_front_generations = trainSPEA(
-                processing_num, network, vnf_list, request_list,
+                processing_num,indi_list,  network, vnf_list, request_list,
                 functions, terminal_decision, terminal_choosing, 
                 pop_size, max_gen,  min_height, max_height, initialization_max_height,  
                 num_of_tour_particips, tournament_prob,crossover_rate, mutation_rate,

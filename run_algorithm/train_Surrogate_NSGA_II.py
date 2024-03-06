@@ -113,7 +113,7 @@ class SurrogateNSGAPopulation(Population):
     
 
 
-def trainSurrogateNSGAII(processing_number, network, vnf_list, request_list,
+def trainSurrogateNSGAII(processing_number, indi_list,  network, vnf_list, request_list,
                 functions, terminal_determining, terminal_choosing, 
                 pop_size, max_gen,  min_height, max_height, initialization_max_height,  
                 num_of_tour_particips, tournament_prob,crossover_rate, mutation_rate,
@@ -128,7 +128,8 @@ def trainSurrogateNSGAII(processing_number, network, vnf_list, request_list,
                                   max_height, initialization_max_height, num_of_tour_particips, tournament_prob,
                                   crossover_rate, mutation_rate, None, None, None, None, None, 
                                   situation_surrogate, ref_rule, neighbor_num)
-    pop.random_init()
+    # pop.random_init()
+    pop.pre_indi_gen(indi_list)
     pool = multiprocessing.Pool(processes=processing_number)
     arg = []
     for indi in pop.indivs:
