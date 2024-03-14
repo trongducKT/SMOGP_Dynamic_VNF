@@ -56,8 +56,8 @@ class Surrogate:
         self.ref_rule = ref_rule
         self.ordered_situations = None
         self.server_situations = None
-        self.determining_ref = None
-        self.choosing_ref = None
+        # self.determining_ref = None
+        # self.choosing_ref = None
 
     
     def gen_situations(self, L_requests_num, U_requests_num, L_servers_num, U_servers_num):
@@ -71,19 +71,19 @@ class Surrogate:
             server_list = [Server_Surrogate() for i in range(servers_num)]
             self.ordered_situations.append(request_list)
             self.server_situations.append(server_list)
-        self.cal_ref_rule()
+        # self.cal_ref_rule()
 
-    def cal_ref_rule(self):
-        self.determining_ref = []
-        self.choosing_ref = []
-        for i in range(self.number_situations):
-            determining_priority = [self.ref_rule.determining_rule.GetSurrogateOutput(request) for request in self.ordered_situations[i]]
-            choosing_priority = [self.ref_rule.choosing_rule.GetSurrogateOutput(server) for server in self.server_situations[i]]
-            determining_index = determining_priority.index(max(determining_priority))
-            choosing_index = choosing_priority.index(max(choosing_priority))
-            self.determining_ref.append(determining_index)
-            self.choosing_ref.append(choosing_index)
-        # print(self.determining_ref, self.choosing_ref)
+    # def cal_ref_rule(self):
+    #     self.determining_ref = []
+    #     self.choosing_ref = []
+    #     for i in range(self.number_situations):
+    #         determining_priority = [self.ref_rule.determining_rule.GetSurrogateOutput(request) for request in self.ordered_situations[i]]
+    #         choosing_priority = [self.ref_rule.choosing_rule.GetSurrogateOutput(server) for server in self.server_situations[i]]
+    #         determining_index = determining_priority.index(max(determining_priority))
+    #         choosing_index = choosing_priority.index(max(choosing_priority))
+    #         self.determining_ref.append(determining_index)
+    #         self.choosing_ref.append(choosing_index)
+    #     # print(self.determining_ref, self.choosing_ref)
 
     def cal_pc(self, individual: Individual):
         determining_pc = []
@@ -92,9 +92,16 @@ class Surrogate:
             determining_priority = [individual.determining_tree.GetSurrogateOutput(request) for request in self.ordered_situations[i]]
             choosing_priority = [individual.choosing_tree.GetSurrogateOutput(server) for server in self.server_situations[i]]
             # print(determining_priority, choosing_priority)
-            determining_rank = ranking_index(determining_priority)
-            choosing_rank = ranking_index(choosing_priority)
+            determining_index = determining_priority.index(max(determining_priority))
+            choosing_index = choosing_priority.index(max(choosing_priority))
+
+            determining_priority_ref = [self.ref_rule.determining_rule.GetSurrogateOutput(request) for request in self.ordered_situations[i]]
+            choosing_priority_ref = [self.ref_rule.choosing_rule.GetSurrogateOutput(server) for server in self.server_situations[i]]
+
+
+            determining_rank = ranking_index(determining_priority_ref)
+            choosing_rank = ranking_index(choosing_priority_ref)
             # print(determining_rank, choosing_rank)
-            determining_pc.append(determining_rank[self.determining_ref[i]])
-            choosing_pc.append(choosing_rank[self.choosing_ref[i]])
+            determining_pc.append(determining_rank[determining_index])
+            choosing_pc.append(choosing_rank[choosing_index])
         return determining_pc + choosing_pc

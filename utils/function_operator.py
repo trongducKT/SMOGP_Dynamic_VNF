@@ -156,6 +156,18 @@ def mutation_tree_node_replace(tree, functions, terminals, min_height, max_heigh
     return tree
 
 
+# Tree branch swap mutation
+def mutation_tree_branch_swap(tree, functions, terminals, min_height, max_height):
+    nodes = tree.GetSubtree()
+    random_node = nodes[randint(len(nodes))]
+    if random_node.children == []:
+        return tree
+    child1 = random_node._children[0]
+    child2 = random_node._children[1]
+    random_node._children[0] = child2
+    random_node._children[1] = child1
+    return tree
+
 
 # Tree crossover
 def crossover_tree_branch_swap(tree, donor, max_height):
