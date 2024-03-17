@@ -7,6 +7,8 @@ import time
 import multiprocessing     
 import matplotlib.pyplot as plt
 import random
+from utils.utils import cal_hv_front
+from utils.function_operator import fast_nondominated_sort
 
 class NSGAPopulation(Population):
     def __init__(self, pop_size, functions, determining_terminals, choosing_terminals, 
@@ -41,7 +43,7 @@ def trainNSGAII(processing_number, indi_list,  network, vnf_list, request_list,
                 calFitness):
     
     Pareto_front_generations = []
-    
+    hv = []
     pop = NSGAPopulation(pop_size, functions, terminal_determining, terminal_choosing,
                           min_height, max_height, initialization_max_height,
                           num_of_tour_particips, tournament_prob, crossover_rate, mutation_rate,
@@ -57,11 +59,18 @@ def trainNSGAII(processing_number, indi_list,  network, vnf_list, request_list,
     for indi, value in zip(pop.indivs, result):
         indi.objectives[0],indi.objectives[1], indi.reject, indi.cost, a = value
     print("Khởi tạo xong ")
-          
+    # pop.natural_selection()    
+
+    fast_nondominated_sort(pop)   
+
+    Pareto_front_generations.append([indi for indi in pop.indivs if indi.rank == 0]) 
+    hv.append(cal_hv_front(Pareto_front_generations[-1], np.array([1, 1])))
+    # Pareto_front_generations.append([indi for indi in pop.indivs if indi.rank == 0])       
     for i in range(max_gen):
         offspring = pop.reproduction()
         print("reproduction xong")
         arg = []
+
         for indi in offspring:
             arg.append((indi, network, request_list, vnf_list))
         result = pool.starmap(calFitness, arg)
@@ -71,14 +80,17 @@ def trainNSGAII(processing_number, indi_list,  network, vnf_list, request_list,
         pop.indivs.extend(offspring)
         pop.natural_selection()    
 
-        Pareto_front_generations.append([indi for indi in pop.indivs if indi.rank == 0])  
+        Pareto_front_generations.append([indi for indi in pop.indivs if indi.rank == 0])
+        hv.append(cal_hv_front(Pareto_front_generations[-1], np.array([1, 1])))  
         print("The he ",i)
         for indi in pop.indivs:
             if(indi.rank == 0):
                 print(indi.objectives)
-                print(indi.determining_tree.GetHumanExpression())
-                print(indi.choosing_tree.GetHumanExpression())
                 print("Ket thuc mot ca the")
+        if len(hv) > 10:
+            if hv[-1] - hv[-10] < 0.01:
+                pool.close()
+                break
         
     pool.close()
     return Pareto_front_generations

@@ -182,3 +182,9 @@ def cal_igd(front, optimal_front):
     ind = IGD(optimal_front)
     return ind(front)
             
+def cal_hv_front(indi_list, ref_point):
+    #print("cal hv font")
+    front = []
+    for indi in indi_list:
+        front.append(indi.objectives)
+    return cal_hv(np.array(front), ref_point)

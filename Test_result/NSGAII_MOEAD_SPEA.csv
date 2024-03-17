@@ -1,9 +1,0 @@
-Instance,NSGAII-GP,MOEAD-GP,SPEA-GP
-nsf_centers_easy_s3,-0.2,0.25,8.51
-nsf_centers_hard_s3,-1.17,-0.62,5.38
-nsf_centers_normal_s3,-0.33,2.88,4.53
-nsf_rural_easy_s3,-1.12,-1.32,3.73
-nsf_rural_normal_s3,0.7,0.2,5.34
-nsf_uniform_easy_s3,-1.72,-2.06,4.73
-nsf_uniform_normal_s3,-0.23,0.22,4.87
-nsf_urban_easy_s3,-0.81,-1.24,3.97

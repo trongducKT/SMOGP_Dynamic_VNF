@@ -9,6 +9,7 @@ import matplotlib.pyplot as plt
 from surrogate.gen_pc import *
 from surrogate.knn import *
 from utils. function_operator import *
+from utils.utils import cal_hv_front
 
 class SurrogateNSGAPopulation(Population):
     def __init__(self, pop_size, functions, determining_terminals, choosing_terminals, 
@@ -47,6 +48,7 @@ class SurrogateNSGAPopulation(Population):
             pc_indi_tuple = tuple(pc_indi)
             if pc_indi_tuple not in pc_check:
                 pc_check.add(pc_indi_tuple)
+                inv.pc = pc_indi
                 self.indivs.append(inv)
                 i += 1
             else:
@@ -76,6 +78,7 @@ class SurrogateNSGAPopulation(Population):
                         pc_indi = self.situation_surrogate.cal_pc(children)
                         pc_indi_tuple = tuple(pc_indi)
                         if pc_indi_tuple not in pc_check:
+                            children.pc = pc_indi
                             pc_check.add(pc_indi_tuple)
                             offspring.append(children)
             if np.random.random() < self.mutation_rate:
@@ -88,25 +91,43 @@ class SurrogateNSGAPopulation(Population):
                         pc_indi = self.situation_surrogate.cal_pc(mutant)
                         pc_indi_tuple = tuple(pc_indi)
                         if pc_indi_tuple not in pc_check:
+                            mutant.pc = pc_indi
                             pc_check.add(pc_indi_tuple)
                             offspring.append(mutant)
         return offspring
     
     def select_offspring(self, offspring):
-        x_train = np.array([indi.pc for indi in self.indivs])
-        y_train = np.array([[indi.rank, indi.rank_crowding_distance] for indi in self.indivs])
+        # x_train = np.array([indi.pc for indi in self.indivs])
+        # y_train = np.array([[indi.rank, indi.rank_crowding_distance] for indi in self.indivs])
+        x_train = []
+        y_train = []
+        objective_check = set()
+        for indi in self.indivs:
+            if tuple(indi.objectives) not in objective_check:
+                x_train.append(indi.pc)
+                y_train.append([indi.rank, indi.rank_crowding_distance])
+                objective_check.add(tuple(indi.objectives))
+
+        x_train = np.array(x_train)
+        y_train = np.array(y_train)
         for indi in offspring:
             x_new = np.array([indi.pc])
             indi.rank, indi.rank_crowding_distance = knn_predict_mean(x_train, y_train, x_new, self.neighbor_num)
         
         offspring.sort(key=lambda x: (x.rank, x.rank_crowding_distance))
-        return offspring[:int(self.pop_size/2)]
+        return offspring[:int(self.pop_size/2)], offspring[int(self.pop_size/2):]
     
     def natural_selection(self, offspring):
         self.indivs.extend(offspring)
         self.cal_rank_individual()
         self.indivs.sort(key=lambda x: (x.rank, x.rank_crowding_distance))
         self.indivs = self.indivs[:self.pop_size]
+
+    def remove_achive(self, offspring_achive):
+        if len(offspring_achive) > self.pop_size:
+            offspring_achive.sort(key = lambda x: x.age)
+            return offspring_achive[:self.pop_size]
+        return offspring_achive
 
 
 
@@ -123,7 +144,7 @@ def trainSurrogateNSGAII(processing_number, indi_list,  network, vnf_list, reque
 
     # Return
     Pareto_front_generations = []
-    
+    hv = []
     pop = SurrogateNSGAPopulation(pop_size, functions, terminal_determining, terminal_choosing, min_height,
                                   max_height, initialization_max_height, num_of_tour_particips, tournament_prob,
                                   crossover_rate, mutation_rate, None, None, None, None, None, 
@@ -134,46 +155,50 @@ def trainSurrogateNSGAII(processing_number, indi_list,  network, vnf_list, reque
     arg = []
     for indi in pop.indivs:
         arg.append((indi, network, request_list, vnf_list))
-    print("Bat dau tinh fitness")
     result = pool.starmap(calFitness, arg)
-    # len_decision = len(pop.indivs)
     for indi, value in zip(pop.indivs, result):
         indi.objectives[0],indi.objectives[1], indi.reject, indi.cost, a = value
     
+    print("Hoan thanh khoi tao")
+    pop.natural_selection([])
 
-    print("Tinh fitness xong")
-    pop.cal_rank_individual()
-        
-    for indi in pop.indivs:
-        print(indi.objectives)
-        print(indi.determining_tree.GetHumanExpression())
-        print(indi.choosing_tree.GetHumanExpression())
-        print(indi.rank)
-        print(indi.rank_crowding_distance)
+    Pareto_front_generations.append([indi for indi in pop.indivs if indi.rank == 0]) 
+    hv.append(cal_hv_front(Pareto_front_generations[-1], np.array([1, 1])))
 
+    offspring_achive = []
     for i in range(max_gen):
         offspring = pop.gen_offspring(crossover_operator_list, mutation_operator_list)
         # Surrogate
-        offspring = pop.select_offspring(offspring)
-        print("reproduction xong")
+        for indi in offspring_achive:
+            indi.age = indi.age + 1
+        offspring_achive = offspring_achive + offspring
+        offspring_evaluation, offspring_no_evaluation = pop.select_offspring(offspring_achive)
+
+        offspring_achive = pop.remove_achive(offspring_no_evaluation)
+
         arg = []
-        for indi in offspring:
+        for indi in offspring_evaluation:
             arg.append((indi, network, request_list, vnf_list))
         result = pool.starmap(calFitness, arg)
-        for indi, value in zip(offspring, result):
+        for indi, value in zip(offspring_evaluation, result):
             indi.objectives[0],indi.objectives[1],  indi.reject, indi.cost, a = value
-        pop.natural_selection(offspring)
 
-        Pareto_front_generations.append([indi for indi in pop.indivs if indi.rank == 0])  
+
+        pop.natural_selection(offspring_evaluation)
+
+        Pareto_front_generations.append([indi for indi in pop.indivs if indi.rank == 0])
+        hv.append(cal_hv_front(Pareto_front_generations[-1], np.array([1, 1])))
+        
         print("The he ",i)
         for indi in pop.indivs:
             if(indi.rank == 0):
                 print(indi.objectives)
-                print(indi.determining_tree.GetHumanExpression())
-                print(indi.choosing_tree.GetHumanExpression())
                 print("Ket thuc mot ca the")
-        
 
+        if len(hv) > 10:
+            if hv[-1] - hv[-10] < 0.01:
+                pool.close()
+                break 
         # if checkChange(pop.history) == True and checkChange(pop.history) == True:
         #     break
         

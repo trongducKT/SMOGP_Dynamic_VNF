@@ -11,6 +11,7 @@ class Individual:
         self.dominated_solutions = None # dominate
         self.pc = []
         self.F = None
+        self.age = 1
     # Dominate operator
     def dominates(self, other_individual):
         and_condition = True
