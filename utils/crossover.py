@@ -1,33 +1,33 @@
 import numpy as np
 from copy import deepcopy
 from .function_operator import *
+from gp.population.individual import Individual
 
-def __crossover_branch_individual_swap(individual, donor,min_height,  max_height):
-    part_crossover = np.random.rand()
+def __crossover_branch_individual_swap(individual: Individual, donor, min_height,  max_height, 
+                                       determining_tree):
+    o1 = deepcopy(determining_tree)
+    if o1 is None:
     # determining tree crossover
-    if part_crossover < 1 / 3:
         o1 = crossover_tree_branch_swap(individual.determining_tree, donor.determining_tree, max_height)
         height1 = o1.GetHeight()
-        if min_height <= height1 <= max_height:
-            return Individual(o1, individual.choosing_tree)
-    # choosing tree crossover
-    elif part_crossover > 2 / 3:
-        o1 = crossover_tree_branch_swap(individual.choosing_tree, donor.choosing_tree, max_height)
-        height2 = o1.GetHeight()
-        if min_height <= height2 <= max_height:
-            return Individual(individual.determining_tree, o1)
-    # both trees crossover
-    else:
-        o1 = crossover_tree_branch_swap(individual.determining_tree, donor.determining_tree, max_height)
-        height1 = o1.GetHeight()
-        if min_height <= height1 <= max_height:
-            o2 = crossover_tree_branch_swap(individual.choosing_tree, donor.choosing_tree, max_height)
-            height2 = o2.GetHeight()
-            if min_height <= height2 <= max_height:
-                return Individual(o1, o2)
-    return individual
+        if min_height > height1 or height1 > max_height:
+            o1 = deepcopy(individual.determining_tree)
 
-def crossover_branch_individual_swap(individual1, individual2, min_height, max_height):
-    child1 = __crossover_branch_individual_swap(individual1, individual2, min_height, max_height)
-    child2 = __crossover_branch_individual_swap(individual2, individual1, min_height, max_height)
+    # ordering tree crossover
+    o2 = crossover_tree_branch_swap(individual.ordering_tree, donor.ordering_tree, max_height)
+    height2 = o2.GetHeight()
+    if min_height > height2 or height2 > max_height:
+        o2 = deepcopy(individual.ordering_tree)
+
+    # choosing tree crossover
+    o3 = crossover_tree_branch_swap(individual.choosing_tree, donor.choosing_tree, max_height)
+    height3 = o1.GetHeight()
+    if min_height > height3 or height3 > max_height:
+        o3 = deepcopy(individual.choosing_tree)
+    # both trees crossover
+    return Individual(o1, o2, o3)
+
+def crossover_branch_individual_swap(individual1, individual2, min_height, max_height, determining_tree):
+    child1 = __crossover_branch_individual_swap(individual1, individual2, min_height, max_height, determining_tree)
+    child2 = __crossover_branch_individual_swap(individual2, individual1, min_height, max_height, determining_tree)
     return child1, child2

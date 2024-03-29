@@ -38,7 +38,7 @@ class Choosing:
         else:
             self.MLU = 1- temp/(len(path)-1)
         if self.MLU == 0:
-            self.MLU = 0.0000001
+            self.MLU = 0
         self.cost = server.get_cost(VNF)
         self.delay = path_delay + VNF.d_f[server.name] + server.delay
         self.MRU = server.get_MRU(T1,T2)

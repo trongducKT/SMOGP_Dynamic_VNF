@@ -8,6 +8,7 @@ from surrogate.gen_pc import *
 from utils.crossover import *
 from utils.mutation import *
 from run_algorithm.train_Surrogate_NSGA_II import SurrogateNSGAPopulation
+from surrogate.gen_surrogate_data import gen_surrogate
 
 if __name__ == '__main__':
     multiprocessing.freeze_support()
@@ -28,7 +29,7 @@ if __name__ == '__main__':
     #             reproduction, random_init, natural_selection, calFitness)
 
     num_pro = 10
-    num_train = 5
+    num_train = 10
     pop_size = 50
     max_gen = 15
     min_height = 2
@@ -59,13 +60,14 @@ if __name__ == '__main__':
     node5.AppendChild(node3)
 
     rule_ref = Ref_Rule(node1, node5)
-    surrogate = Surrogate(20, rule_ref)
-    surrogate.gen_situations(10, 50, 10, 20)
     neighborhood_size = 5
-    data_set = [r'input_noob\conus_centers_noob_s3.json', r'input_noob\conus_rural_noob_s3.json',
-                r'input_noob\conus_uniform_noob_s3.json', r'input_noob\conus_urban_noob_s3.json']
+    data_set = [r'input_noob\nsf_rural_noob_s3.json']
     for data_path in data_set:
-
+        surrogate = gen_surrogate(data_path, num_train, 10, rule_ref)
+        for request in surrogate.ordered_situations:
+            print(request)
+        for server in surrogate.server_situations:
+            print(server)
         pop = SurrogateNSGAPopulation(pop_size, function, terminal_decision, terminal_choosing, min_height,
                                   max_height, initialization_max_height, num_of_tour_particips, tournament_prob,
                                   pc, pm, None, None, None, None, None, 
@@ -78,7 +80,7 @@ if __name__ == '__main__':
         pop_size, max_gen,  min_height, max_height, initialization_max_height,  
         num_of_tour_particips, tournament_prob, pc, pm,
         [crossover_branch_individual_swap], [mutation_individual_node_replace], 5, surrogate, rule_ref,
-        calFitness_removeGPvalue)
+        calFitness)
         print("Hoan thanh")
         # time.sleep(10)
         # run_SurrogateNSGAII(data_path, num_pro, pop.indivs, num_train,  
@@ -94,7 +96,7 @@ if __name__ == '__main__':
                     pop_size, max_gen,  min_height, max_height, initialization_max_height,  
                     num_of_tour_particips, tournament_prob, pc, pm,
                     random_init, crossover_branch_individual_swap, mutation_individual_branch_replace, natural_selection,
-                    calFitness_removeGPvalue)
+                    calFitness)
         
         
         # run_MOEAD(data_path, num_pro, pop.indivs, num_train,  

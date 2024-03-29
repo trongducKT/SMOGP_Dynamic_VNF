@@ -18,35 +18,56 @@ def ranking_index(value_list):
     return index_list
 
 class Request_Surrogate:
-    def __init__(self):
-        self.DDR = random.uniform(0,20)
-        self.BR = random.uniform(20, 100)
-        self.RRS = random.uniform(0,100)
-        self.CRS = random.uniform(0,100)
-        self.MRS = random.uniform(0,100)
-        self.ARS = random.uniform(0,100)
-        self.ACS = random.uniform(0,100)
-        self.AMS = random.uniform(0,100)
-        self.MDR = random.uniform(0,100)
-        self.PN = random.randint(0,10)
-        self.Con = random.random()
+    def __init__(self, DDR, BR, RRS, CRS, MRS, ARS, ACS, AMS, MDR, PN):
+        self.DDR = DDR
+        self.BR = BR
+        self.RRS = RRS
+        self.CRS = CRS
+        self.MRS = MRS
+        self.ARS = ARS
+        self.ACS = ACS
+        self.AMS = AMS
+        self.MDR = MDR
+        self.PN = PN
+    
+    def gen_random(self):
+        self.DDR = random.randint(0, 10)
+        self.BR = random.uniform(30, 100)
+        self.RRS = random.uniform(0, 10)
+        self.CRS = random.uniform(0, 10)
+        self.MRS = random.uniform(0, 10)
+        self.ARS = random.uniform(0, 100)
+        self.ACS = random.uniform(0, 100)
+        self.AMS = random.uniform(0, 100)
+        self.MDR = random.uniform(0, 100)
+        self.PN = random.uniform(0, 10)
 
 class Server_Surrogate:
-    def __init__(self):
-        self.RCSe = random.uniform(0,100)
-        self.RRSe = random.uniform(0,100)
-        self.RMSe = random.uniform(0,100)
-        self.MLU = random.random()
-        self.CS = random.random()
-        self.DS = random.uniform(0,100)
-        self.MUC = random.random()/3
-        self.MUR = random.random()/3
-        self.MUM = random.random()/3
-        self.Con = random.random()
-
+    def __init__(self, RCSe, RRSe, RMSe, MLU, CS, DS, MUC, MUR, MUM):
+        self.RCSe = RCSe
+        self.RRSe = RRSe
+        self.RMSe = RMSe
+        self.MLU = MLU
+        self.CS = CS
+        self.DS = DS
+        self.MUC = MUC
+        self.MUR = MUR
+        self.MUM = MUM
+    
+    def gen_random(self):
+        self.RCSe = random.uniform(0, 100)
+        self.RRSe = random.uniform(0, 100)
+        self.RMSe = random.uniform(0, 100)
+        self.MLU = random.uniform(0, 1)
+        self.CS = random.uniform(0, 1)
+        self.DS = random.uniform(0, 10)
+        self.MUC = random.uniform(0, 1)/3
+        self.MUR = random.uniform(0, 1)/3
+        self.MUM = random.uniform(0, 1)/3
 class Ref_Rule:
-    def __init__(self, determining_rule, choosing_rule):
-        self.determining_rule = determining_rule
+    def __init__(self, determining_rule, ordering_rule, choosing_rule):
+        self.determinig_rule = determining_rule
+        self.ordering_rule = ordering_rule
         self.choosing_rule = choosing_rule
 
 
@@ -56,34 +77,27 @@ class Surrogate:
         self.ref_rule = ref_rule
         self.ordered_situations = None
         self.server_situations = None
-        # self.determining_ref = None
-        # self.choosing_ref = None
 
     
-    def gen_situations(self, L_requests_num, U_requests_num, L_servers_num, U_servers_num):
+    def gen_situations_random(self, L_requests_num, U_requests_num, L_servers_num, U_servers_num):
         self.ordered_situations = []
         self.server_situations = []
 
         for i in range(self.number_situations):
             requests_num = random.randint(L_requests_num, U_requests_num)
             servers_num = random.randint(L_servers_num, U_servers_num)
-            request_list = [Request_Surrogate() for i in range(requests_num)]
-            server_list = [Server_Surrogate() for i in range(servers_num)]
+            request_list = []
+            server_list = []
+            for ii in range(requests_num):
+                request = Request_Surrogate(None, None, None, None, None, None, None, None, None, None)
+                request.gen_random()
+                request_list.append(request)
+            for ii in range(servers_num):
+                server = Server_Surrogate(None, None, None, None, None, None, None, None, None)
+                server.gen_random()
+                server_list.append(server)
             self.ordered_situations.append(request_list)
             self.server_situations.append(server_list)
-        # self.cal_ref_rule()
-
-    # def cal_ref_rule(self):
-    #     self.determining_ref = []
-    #     self.choosing_ref = []
-    #     for i in range(self.number_situations):
-    #         determining_priority = [self.ref_rule.determining_rule.GetSurrogateOutput(request) for request in self.ordered_situations[i]]
-    #         choosing_priority = [self.ref_rule.choosing_rule.GetSurrogateOutput(server) for server in self.server_situations[i]]
-    #         determining_index = determining_priority.index(max(determining_priority))
-    #         choosing_index = choosing_priority.index(max(choosing_priority))
-    #         self.determining_ref.append(determining_index)
-    #         self.choosing_ref.append(choosing_index)
-    #     # print(self.determining_ref, self.choosing_ref)
 
     def cal_pc(self, individual: Individual):
         determining_pc = []
@@ -95,7 +109,7 @@ class Surrogate:
             determining_index = determining_priority.index(max(determining_priority))
             choosing_index = choosing_priority.index(max(choosing_priority))
 
-            determining_priority_ref = [self.ref_rule.determining_rule.GetSurrogateOutput(request) for request in self.ordered_situations[i]]
+            determining_priority_ref = [self.ref_rule.ordering_rule.GetSurrogateOutput(request) for request in self.ordered_situations[i]]
             choosing_priority_ref = [self.ref_rule.choosing_rule.GetSurrogateOutput(server) for server in self.server_situations[i]]
 
 

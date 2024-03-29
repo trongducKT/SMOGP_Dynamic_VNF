@@ -1,8 +1,9 @@
 import numpy as np
 class Individual:
-    def __init__(self, determining_tree, choosing_tree):
+    def __init__(self, determining_tree, ordering_tree, choosing_tree):
         self.determining_tree = determining_tree
         self.choosing_tree = choosing_tree
+        self.ordering_tree = ordering_tree
         self.objectives = np.zeros(2)
         self.rank = None
         self.rank_crowding_distance = None

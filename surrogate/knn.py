@@ -1,11 +1,12 @@
 import numpy as np
-import time
 
 def knn_predict_mean(X_train, y_train, x_new, k):
     distances = []
     for i in range(len(X_train)):
-        distance = np.linalg.norm(X_train[i] - x_new)
-        distances.append(distance)
+        difference = X_train[i] - x_new
+        distance = len(difference) - np.count_nonzero(difference)
+        # distance = np.linalg.norm(X_train[i] - x_new)
+        distances.append(-distance)
     nearest_indices = np.argsort(distances)[:k]
     
     nearest_labels = y_train[nearest_indices]

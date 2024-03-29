@@ -1,28 +1,27 @@
 from data_info.read_data import *
 from network.network import Network
 from utils.utils import *
-from utils.function_operator import GenerateRandomTree
 from gp.population.population import *
-import time 
 import multiprocessing     
-import matplotlib.pyplot as plt
 from surrogate.gen_pc import *
 from surrogate.knn import *
-from utils. function_operator import *
 from utils.utils import cal_hv_front
+from utils.initialization import *
+from utils.selection import *
 
 class SurrogateNSGAPopulation(Population):
-    def __init__(self, pop_size, functions, determining_terminals, choosing_terminals, 
+    def __init__(self, pop_size, 
+                 functions, determining_terminals, ordering_terminals, choosing_terminals, 
                  min_height, max_height, initialization_max_tree_height, 
                  num_of_tour_particips, tournament_prob, crossover_rate, mutation_rate,
-                 initialize_operator, crossover_operator, mutation_operator, selection_operator, 
-                 reproduce_opertation, situation_surrogate: Surrogate, ref_rule: Ref_Rule, neighbor_num):
-        super().__init__(pop_size, functions, determining_terminals, choosing_terminals, 
-                 min_height, max_height, initialization_max_tree_height, 
-                 num_of_tour_particips, tournament_prob, crossover_rate, mutation_rate,
-                initialize_operator, crossover_operator, mutation_operator, selection_operator)
+                 determining_tree, 
+                 situation_surrogate: Surrogate, ref_rule: Ref_Rule, neighbor_num):
+        super().__init__(pop_size, 
+                        functions, determining_terminals, ordering_terminals, choosing_terminals, 
+                        min_height, max_height, initialization_max_tree_height, 
+                        num_of_tour_particips, tournament_prob, crossover_rate, mutation_rate,
+                        determining_tree)
 
-        self.reproduce_opertation = reproduce_opertation
         self.situation_surrogate = situation_surrogate
         self.ref_rule = ref_rule
         self.neighbor_num = neighbor_num
@@ -37,13 +36,8 @@ class SurrogateNSGAPopulation(Population):
             if i >= next_depth_interval:
                 next_depth_interval += init_depth_interval
                 curr_max_depth += 1
-            determining_tree = GenerateRandomTree( self.functions, self.determining_terminals, curr_max_depth, 
-                                                        curr_height=0, 
-                method='grow' if np.random.random() < .5 else 'full', min_height=self.min_height )
-            choosing_tree = GenerateRandomTree( self.functions, self.choosing_terminals, curr_max_depth, 
-                                                    curr_height=0, 
-                method='grow' if np.random.random() < .5 else 'full', min_height=self.min_height )
-            inv = Individual(determining_tree, choosing_tree)
+            inv = individual_init(self.min_height, curr_max_depth, self.determining_tree, self.functions,
+                                  self.determining_terminals, self.ordering_terminals, self.choosing_terminals)
             pc_indi = self.situation_surrogate.cal_pc(inv)
             pc_indi_tuple = tuple(pc_indi)
             if pc_indi_tuple not in pc_check:
@@ -73,7 +67,7 @@ class SurrogateNSGAPopulation(Population):
             indi1, indi2 = random.choices(self.indivs, k=2)
             if np.random.random() < self.crossover_rate:
                 for crossover_operator in crossover_operator_list:
-                    children1, children2 = crossover_operator(indi1, indi2, self.min_height, self.max_height)
+                    children1, children2 = crossover_operator(indi1, indi2, self.min_height, self.max_height, self.determining_tree)
                     for children in [children1, children2]:
                         pc_indi = self.situation_surrogate.cal_pc(children)
                         pc_indi_tuple = tuple(pc_indi)
@@ -83,10 +77,12 @@ class SurrogateNSGAPopulation(Population):
                             offspring.append(children)
             if np.random.random() < self.mutation_rate:
                 for mutation_operator in mutation_operator_list:
-                    mutant1 = mutation_operator(indi1, self.functions, self.determining_terminals, 
-                                      self.choosing_terminals, self.min_height, self.max_height)
-                    mutant2 = mutation_operator(indi2, self.functions, self.determining_terminals,
-                                        self.choosing_terminals, self.min_height, self.max_height)
+                    mutant1 = mutation_operator(indi1, self.functions, 
+                                                self.determining_terminals, self.ordering_terminals, self.choosing_terminals, 
+                                                self.min_height, self.max_height, self.determining_tree)
+                    mutant2 = mutation_operator(indi2, self.functions, 
+                                                self.determining_terminals, self.ordering_terminals, self.choosing_terminals, 
+                                                self.min_height, self.max_height, self.determining_tree)
                     for mutant in [mutant1, mutant2]:
                         pc_indi = self.situation_surrogate.cal_pc(mutant)
                         pc_indi_tuple = tuple(pc_indi)
@@ -94,8 +90,19 @@ class SurrogateNSGAPopulation(Population):
                             mutant.pc = pc_indi
                             pc_check.add(pc_indi_tuple)
                             offspring.append(mutant)
+            if np.random.random() < 1 - self.crossover_rate - self.mutation_rate:
+                indi = individual_init(self.min_height, self.max_height, self.determining_tree, self.functions,
+                                       self.determining_terminals, self.ordering_terminals, self.choosing_terminals)
+                pc_indi = self.situation_surrogate.cal_pc(indi)
+                pc_indi_tuple = tuple(pc_indi)
+                if pc_indi_tuple not in pc_check:
+                    indi.pc = pc_indi
+                    pc_check.add(pc_indi_tuple)
+                    offspring.append(indi)
+        
         return offspring
     
+
     def select_offspring(self, offspring):
         # x_train = np.array([indi.pc for indi in self.indivs])
         # y_train = np.array([[indi.rank, indi.rank_crowding_distance] for indi in self.indivs])
@@ -103,6 +110,8 @@ class SurrogateNSGAPopulation(Population):
         y_train = []
         objective_check = set()
         for indi in self.indivs:
+            if indi.objectives[0] == 1:
+                continue
             if tuple(indi.objectives) not in objective_check:
                 x_train.append(indi.pc)
                 y_train.append([indi.rank, indi.rank_crowding_distance])
@@ -113,7 +122,6 @@ class SurrogateNSGAPopulation(Population):
         for indi in offspring:
             x_new = np.array([indi.pc])
             indi.rank, indi.rank_crowding_distance = knn_predict_mean(x_train, y_train, x_new, self.neighbor_num)
-        
         offspring.sort(key=lambda x: (x.rank, x.rank_crowding_distance))
         return offspring[:int(self.pop_size/2)], offspring[int(self.pop_size/2):]
     
@@ -127,28 +135,26 @@ class SurrogateNSGAPopulation(Population):
         if len(offspring_achive) > self.pop_size:
             offspring_achive.sort(key = lambda x: x.age)
             return offspring_achive[:self.pop_size]
-        return offspring_achive
-
-
-
-    
+        return offspring_achive  
 
 
 def trainSurrogateNSGAII(processing_number, indi_list,  network, vnf_list, request_list,
-                functions, terminal_determining, terminal_choosing, 
-                pop_size, max_gen,  min_height, max_height, initialization_max_height,  
-                num_of_tour_particips, tournament_prob,crossover_rate, mutation_rate,
-                crossover_operator_list, mutation_operator_list, calFitness,
-                situation_surrogate, ref_rule, neighbor_num):
+                         functions, terminal_determining, terminal_ordering, terminal_choosing, 
+                         pop_size, max_gen,  min_height, max_height, initialization_max_height,  
+                        num_of_tour_particips, tournament_prob,crossover_rate, mutation_rate,
+                        crossover_operator_list, mutation_operator_list, calFitness,
+                        situation_surrogate, ref_rule, neighbor_num, determining_tree):
     
 
     # Return
     Pareto_front_generations = []
     hv = []
-    pop = SurrogateNSGAPopulation(pop_size, functions, terminal_determining, terminal_choosing, min_height,
-                                  max_height, initialization_max_height, num_of_tour_particips, tournament_prob,
-                                  crossover_rate, mutation_rate, None, None, None, None, None, 
-                                  situation_surrogate, ref_rule, neighbor_num)
+    pop = SurrogateNSGAPopulation(pop_size, 
+                                    functions, terminal_determining, terminal_ordering, terminal_choosing, 
+                                    min_height, max_height, initialization_max_height, 
+                                    num_of_tour_particips, tournament_prob, crossover_rate, mutation_rate,
+                                    determining_tree, 
+                                    situation_surrogate, ref_rule, neighbor_num)
     # pop.random_init()
     pop.pre_indi_gen(indi_list)
     pool = multiprocessing.Pool(processes=processing_number)
@@ -157,11 +163,10 @@ def trainSurrogateNSGAII(processing_number, indi_list,  network, vnf_list, reque
         arg.append((indi, network, request_list, vnf_list))
     result = pool.starmap(calFitness, arg)
     for indi, value in zip(pop.indivs, result):
-        indi.objectives[0],indi.objectives[1], indi.reject, indi.cost, a = value
+        indi.objectives[0],indi.objectives[1], indi.reject, indi.cost = value
     
     print("Hoan thanh khoi tao")
     pop.natural_selection([])
-
     Pareto_front_generations.append([indi for indi in pop.indivs if indi.rank == 0]) 
     hv.append(cal_hv_front(Pareto_front_generations[-1], np.array([1, 1])))
 
@@ -173,7 +178,6 @@ def trainSurrogateNSGAII(processing_number, indi_list,  network, vnf_list, reque
             indi.age = indi.age + 1
         offspring_achive = offspring_achive + offspring
         offspring_evaluation, offspring_no_evaluation = pop.select_offspring(offspring_achive)
-
         offspring_achive = pop.remove_achive(offspring_no_evaluation)
 
         arg = []
@@ -181,29 +185,19 @@ def trainSurrogateNSGAII(processing_number, indi_list,  network, vnf_list, reque
             arg.append((indi, network, request_list, vnf_list))
         result = pool.starmap(calFitness, arg)
         for indi, value in zip(offspring_evaluation, result):
-            indi.objectives[0],indi.objectives[1],  indi.reject, indi.cost, a = value
+            indi.objectives[0],indi.objectives[1],  indi.reject, indi.cost = value
 
 
         pop.natural_selection(offspring_evaluation)
-
         Pareto_front_generations.append([indi for indi in pop.indivs if indi.rank == 0])
         hv.append(cal_hv_front(Pareto_front_generations[-1], np.array([1, 1])))
         
-        print("The he ",i)
-        for indi in pop.indivs:
-            if(indi.rank == 0):
-                print(indi.objectives)
-                print("Ket thuc mot ca the")
+        print("The he ", i, ":", hv[-1])
 
         if len(hv) > 10:
             if hv[-1] - hv[-10] < 0.01:
                 pool.close()
                 break 
-        # if checkChange(pop.history) == True and checkChange(pop.history) == True:
-        #     break
         
     pool.close()
     return Pareto_front_generations
-
-
-# Pareto front across generations (list of Individuals)
