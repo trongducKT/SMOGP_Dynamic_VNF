@@ -19,7 +19,7 @@ if __name__ == '__main__':
     terminal_choosing = [RCSe(), RRSe(), RMSe(), MLU(), CS(), DS(), MUC(), MUM(), MUR(), Const()]
     num_pro = 10
     num_train = 10
-    pop_size = 50
+    pop_size = 5
     max_gen = 15
     min_height = 2
     max_height = 8
@@ -77,7 +77,7 @@ if __name__ == '__main__':
 
     rule_ref = Ref_Rule(determining_tree, node1, node5)
     neighborhood_size = 3
-    data_set = [r'data_1_9\nsf_rural_easy_s1.json']
+    data_set = [r'data_1_9\conus_rural_normal_s3.json']
     for data_path in data_set:
         # surrogate = Surrogate(10, rule_ref)
         # surrogate.gen_situations_random(20, 50, 5, 10)
@@ -86,11 +86,19 @@ if __name__ == '__main__':
                                       min_height, max_height, initialization_max_height, num_of_tour_particips,
                                       tournament_prob, pc, pm, determining_tree, surrogate, rule_ref, num_neigbor)
         pop.random_init()
-        objective_json, tree_json, test_objectives_json = run_SurrogateNSGAII(data_path, num_pro, pop.indivs, num_train, function, terminal_determining, terminal_ordering,
+        print("Vector pc")
+        for indi in pop.indivs:
+            print(indi.pc)
+        print("Kết thúc in")
+        objective_json, tree_json, test_objectives_json, extract_surrogate = run_SurrogateNSGAII(data_path, num_pro, pop.indivs, num_train, function, terminal_determining, terminal_ordering,
                             terminal_choosing, pop_size, max_gen, min_height, max_height, initialization_max_height,
                             num_of_tour_particips, tournament_prob, pc, pm, crossover_operator_list, mutation_operator_list,
                             num_neigbor, surrogate, rule_ref, calFitness_three_policies, determining_tree)
 
+
+        name_path = "surrogate_value.json"
+        with open(name_path, 'w') as f:
+            json.dump(extract_surrogate, f)
         objective_json, tree_json, test_objectives_json = run_NSGAII( data_path, num_pro, pop.indivs, num_train,  
                 function, terminal_determining, terminal_ordering, terminal_choosing, 
                 pop_size, max_gen,  min_height, max_height, initialization_max_height,  

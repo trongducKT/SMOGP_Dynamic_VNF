@@ -183,6 +183,8 @@ def trainSurrogateNSGAII(processing_number, indi_list,  network, vnf_list, reque
     # Return
     Pareto_front_generations = []
     hv = []
+    predict_objectives = []
+    extractly_objectvies = []
     pop = SurrogateNSGAPopulation(pop_size, 
                                     functions, terminal_determining, terminal_ordering, terminal_choosing, 
                                     min_height, max_height, initialization_max_height, 
@@ -227,6 +229,8 @@ def trainSurrogateNSGAII(processing_number, indi_list,  network, vnf_list, reque
             print(indi.objectives[0], indi.objectives[1])
             print(indi.objectives_predict[0], indi.objectives_predict[1])
             print("________________________")
+            predict_objectives.append(indi.objectives_predict)
+            extractly_objectvies.append(indi.objectives)
 
         pop.update_train_data(offspring_evaluation)
         pop.natural_selection(offspring_evaluation)
@@ -241,4 +245,4 @@ def trainSurrogateNSGAII(processing_number, indi_list,  network, vnf_list, reque
                 break 
         
     pool.close()
-    return Pareto_front_generations
+    return Pareto_front_generations, predict_objectives, extractly_objectvies

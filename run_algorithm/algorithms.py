@@ -200,7 +200,7 @@ def run_SurrogateNSGAII(data_path, processing_num,indi_list,  num_train,
         else: 
             request_test.append(request)
     time_start = time.time()
-    Pareto_front_generations = trainSurrogateNSGAII(processing_num, indi_list,  network, vnf_list, request_list,
+    Pareto_front_generations, predict_objectives, extract_objectives = trainSurrogateNSGAII(processing_num, indi_list,  network, vnf_list, request_list,
                 functions, terminal_determining, terminal_ordering, terminal_choosing, 
                 pop_size, max_gen,  min_height, max_height, initialization_max_height,  
                 num_of_tour_particips, tournament_prob,crossover_rate, mutation_rate,
@@ -248,7 +248,23 @@ def run_SurrogateNSGAII(data_path, processing_num,indi_list,  num_train,
     test_objectives_json["time_train"] = time_end - time_start
     pool.close()
 
-    return objective_json, tree_json, test_objectives_json
+    predict_objectives_1 = []
+    predict_objectives_2 = []
+    extract_objectives_1 = []
+    extract_objectives_2 = []
+    for value in predict_objectives:
+        predict_objectives_1.append(value[0])
+        predict_objectives_2.append(value[1])
+    for value in extract_objectives:
+        extract_objectives_1.append(value[0])
+        extract_objectives_2.append(value[1])
+    surrogate_extractly = {}
+    surrogate_extractly["predict_objectives_1"] = predict_objectives_1
+    surrogate_extractly["predict_objectives_2"] = predict_objectives_2
+    surrogate_extractly["extract_objectives_1"] = extract_objectives_1
+    surrogate_extractly["extract_objectives_2"] = extract_objectives_2
+
+    return objective_json, tree_json, test_objectives_json, surrogate_extractly
 
 
 # def run_SPEA( data_path, processing_num,indi_list,  num_train,  

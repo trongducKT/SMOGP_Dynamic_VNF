@@ -1,5 +1,6 @@
 from gp.population.individual import Individual
 import random
+import time 
 
 def ranking_index(value_list):
     sorted_list = sorted(value_list, reverse=True)
@@ -114,7 +115,6 @@ class Surrogate:
 
             ordering_priority_ref = [self.ref_rule.ordering_rule.GetSurrogateOutput(request) for request in self.ordered_situations[i]]
             choosing_priority_ref = [self.ref_rule.choosing_rule.GetSurrogateOutput(server) for server in self.server_situations[i]]
-
 
             ordering_rank = ranking_index(ordering_priority_ref)
             choosing_rank = ranking_index(choosing_priority_ref)
