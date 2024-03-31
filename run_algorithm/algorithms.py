@@ -62,14 +62,6 @@ def run_NSGAII( data_path, processing_num, indi_list, num_train,
         objective_json[str(gen)] = objectives
         tree_json[str(gen)] = trees
         gen += 1
-
-    day = time.strftime("%d_%m_%Y")
-    object_file_name = "./Pareto_objective_history/NSGAII/"+ str(day) +"_" + data_path[11:-5] + ".json"
-    front_file_name = "./Pareto_tree_history/NSGAII/"+ str(day) +"_" + data_path[11:-5] + ".json"
-    with open(object_file_name, 'w') as file:
-        json.dump(objective_json, file)
-    with open(front_file_name, 'w') as file:
-        json.dump(tree_json, file)
     
     pool = multiprocessing.Pool(processes=processing_num)
     arg = []
@@ -79,7 +71,7 @@ def run_NSGAII( data_path, processing_num, indi_list, num_train,
     test_objectives = []
     for value in result:
         objectives_temp= {}
-        normal_reject, normal_cost, reject, cost, history = value
+        normal_reject, normal_cost, reject, cost = value
         objectives_temp["normal_reject"] = normal_reject
         objectives_temp["normal_cost"] = normal_cost
         objectives_temp["reject"] = reject
@@ -89,10 +81,7 @@ def run_NSGAII( data_path, processing_num, indi_list, num_train,
     test_objectives_json["test_result"] = test_objectives
     test_objectives_json["time_train"] = time_end - time_start
     pool.close()
-
-    test_file_name = "./Test_result/NSGAII/"+ str(day) +"_" + data_path[11:-5] + ".json"
-    with open(test_file_name, 'w') as file:
-        json.dump(test_objectives_json, file)
+    return objective_json, tree_json, test_objectives_json
 
 # def run_MOEAD(data_path, processing_num, indi_list,  num_train,  
 #                 functions, terminal_determining, terminal_choosing, 
@@ -240,14 +229,6 @@ def run_SurrogateNSGAII(data_path, processing_num,indi_list,  num_train,
         tree_json[str(gen)] = trees
         gen += 1
 
-    day = time.strftime("%d_%m_%Y")
-    object_file_name = "./Pareto_objective_history/Surrogate/"+ str(day) +"_" + data_path[11:-5] + ".json"
-    front_file_name = "./Pareto_tree_history/Surrogate/"+ str(day) +"_" + data_path[11:-5] + ".json"
-    with open(object_file_name, 'w') as file:
-        json.dump(objective_json, file)
-    with open(front_file_name, 'w') as file:
-        json.dump(tree_json, file)
-
     pool = multiprocessing.Pool(processes=processing_num)
     arg = []
     for indi in Pareto_front_generations[-1]:
@@ -256,7 +237,7 @@ def run_SurrogateNSGAII(data_path, processing_num,indi_list,  num_train,
     test_objectives = []
     for value in result:
         objectives_temp= {}
-        normal_reject, normal_cost, reject, cost, history = value
+        normal_reject, normal_cost, reject, cost = value
         objectives_temp["normal_reject"] = normal_reject
         objectives_temp["normal_cost"] = normal_cost
         objectives_temp["reject"] = reject
@@ -267,9 +248,7 @@ def run_SurrogateNSGAII(data_path, processing_num,indi_list,  num_train,
     test_objectives_json["time_train"] = time_end - time_start
     pool.close()
 
-    test_file_name = "./Test_result/Surrogate/"+ str(day) +"_" + data_path[11:-5] + ".json"
-    with open(test_file_name, 'w') as file:
-        json.dump(test_objectives_json, file)
+    return objective_json, tree_json, test_objectives_json
 
 
 # def run_SPEA( data_path, processing_num,indi_list,  num_train,  

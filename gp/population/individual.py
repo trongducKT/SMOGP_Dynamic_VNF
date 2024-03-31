@@ -13,6 +13,8 @@ class Individual:
         self.pc = []
         self.F = None
         self.age = 1
+        self.objectives_predict = np.zeros(2)
+        self.extractly_evaluated = False
     # Dominate operator
     def dominates(self, other_individual):
         and_condition = True

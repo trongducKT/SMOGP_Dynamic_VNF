@@ -41,6 +41,9 @@ class Request_Surrogate:
         self.AMS = random.uniform(0, 100)
         self.MDR = random.uniform(0, 100)
         self.PN = random.uniform(0, 10)
+    
+    def __repr__(self) -> str:
+        return f"DDR: {self.DDR}, BR: {self.BR}, RRS: {self.RRS}, CRS: {self.CRS}, MRS: {self.MRS}, ARS: {self.ARS}, ACS: {self.ACS}, AMS: {self.AMS}, MDR: {self.MDR}, PN: {self.PN}"
 
 class Server_Surrogate:
     def __init__(self, RCSe, RRSe, RMSe, MLU, CS, DS, MUC, MUR, MUM):
@@ -100,22 +103,22 @@ class Surrogate:
             self.server_situations.append(server_list)
 
     def cal_pc(self, individual: Individual):
-        determining_pc = []
+        ordering_pc = []
         choosing_pc = []
         for i in range(self.number_situations):
-            determining_priority = [individual.determining_tree.GetSurrogateOutput(request) for request in self.ordered_situations[i]]
+            determining_priority = [individual.ordering_tree.GetSurrogateOutput(request) for request in self.ordered_situations[i]]
             choosing_priority = [individual.choosing_tree.GetSurrogateOutput(server) for server in self.server_situations[i]]
             # print(determining_priority, choosing_priority)
-            determining_index = determining_priority.index(max(determining_priority))
+            ordering_index = determining_priority.index(max(determining_priority))
             choosing_index = choosing_priority.index(max(choosing_priority))
 
-            determining_priority_ref = [self.ref_rule.ordering_rule.GetSurrogateOutput(request) for request in self.ordered_situations[i]]
+            ordering_priority_ref = [self.ref_rule.ordering_rule.GetSurrogateOutput(request) for request in self.ordered_situations[i]]
             choosing_priority_ref = [self.ref_rule.choosing_rule.GetSurrogateOutput(server) for server in self.server_situations[i]]
 
 
-            determining_rank = ranking_index(determining_priority_ref)
+            ordering_rank = ranking_index(ordering_priority_ref)
             choosing_rank = ranking_index(choosing_priority_ref)
-            # print(determining_rank, choosing_rank)
-            determining_pc.append(determining_rank[determining_index])
+            # print(ordering_rank, choosing_rank)
+            ordering_pc.append(ordering_rank[ordering_index])
             choosing_pc.append(choosing_rank[choosing_index])
-        return determining_pc + choosing_pc
+        return ordering_pc + choosing_pc

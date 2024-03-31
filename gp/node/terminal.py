@@ -3,6 +3,63 @@ import numpy as np
 
 
 # Decision policy
+
+class ARRS(Node):
+    def __init__(self):
+        super(ARRS, self).__init__()
+    def __repr__(self):
+        return "ARRS"
+    def _GetHumanExpressionSpecificNode(self, args):
+        return "ARRS"
+    def getSymbol(self):
+        return 1
+    def GetOutput(self, X):
+        return X.VNFs_request_resource["ram"]/len(X.r.VNFs)
+    def GetSurrogateOutput(self, X):
+        return X.ARRS
+
+class ACRS(Node):
+    def __init__(self):
+        super(ACRS, self).__init__()
+    def __repr__(self):
+        return "ACRS"
+    def _GetHumanExpressionSpecificNode(self, args):
+        return "ACRS"
+    def getSymbol(self):
+        return 2
+    def GetOutput(self, X):
+        return X.VNFs_request_resource["cpu"]/len(X.r.VNFs)
+    def GetSurrogateOutput(self, X):
+        return X.ACRS
+
+class AMRS(Node):
+    def __init__(self):
+        super(AMRS, self).__init__()
+    def __repr__(self):
+        return "AMRS"
+    def _GetHumanExpressionSpecificNode(self, args):
+        return "AMRS"
+    def getSymbol(self):
+        return 3
+    def GetOutput(self, X):
+        return X.VNFs_request_resource["mem"]/len(X.r.VNFs)
+    def GetSurrogateOutput(self, X):
+        return X.AMRS
+
+class Accepted_Node(Node):
+    def __init__(self, accepted_value):
+        super(Accepted_Node, self).__init__()
+        self.accepted_value = accepted_value
+    def __repr__(self):
+        return "Accepted_Node"
+    def _GetHumanExpressionSpecificNode(self, args):
+        return "Accepted_Node"
+    def getSymbol(self):
+        return 4
+    def GetOutput(self, X):
+        return self.accepted_value
+    def GetSurrogateOutput(self, X):
+        return X.Accepted_Node
 # Due date of request 
 class DDR(Node):
     def __init__(self):

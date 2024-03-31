@@ -53,7 +53,6 @@ def deploy(network: Network, request: Request, indi : Individual, vnf_list):
                 # T3, T4 = get_time_slot(T, path_delay)     #Duration of using link
                 X = Choosing(server_node, T1, T2, path, path_delay, T3, T4, vnf_list[VNF], network_copy.links)
                 value_of_gp = indi.choosing_tree.GetOutput(X)
-                print(value_of_gp)
                 se_surrogate = Server_Surrogate(X.server_state["cpu"], X.server_state["ram"], X.server_state["mem"], 
                                                 X.MLU, X.cost, X.delay, 1-X.MRU["cpu"], 1-X.MRU["ram"], 1-X.MRU["mem"])
                 surrogate_VNF.append(se_surrogate)
@@ -99,7 +98,7 @@ def deploy(network: Network, request: Request, indi : Individual, vnf_list):
      
     return update_deploy, request_cost, server_surrogate_list
 
-def decision_gp(indi: Individual, request: Request, T, network, vnf_list):
+def ordering_gp(indi: Individual, request: Request, T, network, vnf_list):
     server_list = network.MDC_nodes
     vnf_resource = VNFs_resource_max(server_list, vnf_list, T)
     max_delay = max_delay_vnf(server_list, vnf_list)
@@ -131,6 +130,14 @@ def decision_gp(indi: Individual, request: Request, T, network, vnf_list):
     result  = indi.determining_tree.GetOutput(X)
     return result, request_surrogate
 
+def determining_gp(indi: Individual, request: Request, T, network, vnf_list):
+    server_list = network.MDC_nodes
+    vnf_resource = VNFs_resource_max(server_list, vnf_list, T)
+    max_delay = max_delay_vnf(server_list, vnf_list)
+    X = Decision(request, T, vnf_resource, max_delay, vnf_list)
+    result  = indi.determining_tree.GetOutput(X)
+    return result
+
 def store_event(indi: Individual, network, request_list, vnf_list):
     # storing processing history
     request_surrogate = []
@@ -157,12 +164,13 @@ def store_event(indi: Individual, network, request_list, vnf_list):
         # Calculate value of GP for each request
         request_surrogate_item = []
         for request in request_processing:
-            value_of_gp, re_sur_item = decision_gp(indi, request, T, network_copy, vnf_list)
+            value_of_determining_gp = determining_gp(indi, request, T, network_copy, vnf_list)
+            if value_of_determining_gp < 0:
+                reject = reject + 1
+                continue
+            value_of_ordering_gp, re_sur_item = ordering_gp(indi, request, T, network_copy, vnf_list)
             request_surrogate_item.append(re_sur_item)
-            # if value_of_gp < 0:
-            #     reject = reject + 1
-            #     continue
-            request_decision.append((request, value_of_gp))
+            request_decision.append((request, value_of_ordering_gp))
         request_decision = sorted(request_decision, key = lambda x: x[1], reverse = True)
 
         for re_de in request_decision:
@@ -188,7 +196,7 @@ def store_event(indi: Individual, network, request_list, vnf_list):
     return request_surrogate, server_surrogate
 
 def gen_surrogate(data_path, num_train, num_surrogate, ref_rule: Ref_Rule):
-    indi = Individual(ref_rule.determining_rule, ref_rule.choosing_rule)
+    indi = Individual(ref_rule.determinig_rule, ref_rule.ordering_rule, ref_rule.choosing_rule)
     data = Read_data(data_path)
     request_list = data.get_R()
     vnf_list = data.get_F()
@@ -211,6 +219,8 @@ def gen_surrogate(data_path, num_train, num_surrogate, ref_rule: Ref_Rule):
     
     request_surrogate, server_surrogate = store_event(indi, network, request_train, vnf_list)
 
+    print(len(request_surrogate))
+    print(len(server_surrogate))
     surrogate = Surrogate(num_surrogate, ref_rule)
 
     surrogate.ordered_situations = []
