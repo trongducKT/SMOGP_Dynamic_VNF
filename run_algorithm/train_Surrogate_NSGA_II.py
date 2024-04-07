@@ -177,14 +177,15 @@ def trainSurrogateNSGAII(processing_number, indi_list,  network, vnf_list, reque
                          pop_size, max_gen,  min_height, max_height, initialization_max_height,  
                         num_of_tour_particips, tournament_prob,crossover_rate, mutation_rate,
                         crossover_operator_list, mutation_operator_list, calFitness,
-                        situation_surrogate, ref_rule, neighbor_num, determining_tree):
+                        situation_surrogate, ref_rule, neighbor_num, determining_tree, max_NFE):
     
 
     # Return
+    used_NFE = 0
+    NFE_generations = {}
     Pareto_front_generations = []
     hv = []
-    predict_objectives = []
-    extractly_objectvies = []
+    surrogate_objectives = {}
     pop = SurrogateNSGAPopulation(pop_size, 
                                     functions, terminal_determining, terminal_ordering, terminal_choosing, 
                                     min_height, max_height, initialization_max_height, 
@@ -208,9 +209,14 @@ def trainSurrogateNSGAII(processing_number, indi_list,  network, vnf_list, reque
     Pareto_front_generations.append([indi for indi in pop.indivs if indi.rank == 0]) 
     hv.append(cal_hv_front(Pareto_front_generations[-1], np.array([1, 1])))
     print("The he 0: ", hv[-1])
+    used_NFE += pop.pop_size
+    NFE_generations[0] = {"NFE": used_NFE, "HV": hv[-1]}
 
     offspring_achive = []
     for i in range(max_gen):
+        if used_NFE >= max_NFE:
+            pool.close()
+            break
         offspring = pop.gen_offspring(crossover_operator_list, mutation_operator_list)
         # Surrogate
         # for indi in offspring_achive:
@@ -219,18 +225,29 @@ def trainSurrogateNSGAII(processing_number, indi_list,  network, vnf_list, reque
         # offspring_evaluation, offspring_no_evaluation = pop.select_offspring(offspring_achive)
         # offspring_achive = pop.remove_achive(offspring_no_evaluation)
         offspring_evaluation = pop.select_offspring_objectives_predict(offspring)
+        number_indi = min(max_NFE - used_NFE, len(offspring_evaluation))
+        offspring_evaluation = offspring_evaluation[:number_indi]
+
         arg = []
         for indi in offspring_evaluation:
             arg.append((indi, network, request_list, vnf_list))
         result = pool.starmap(calFitness, arg)
+        predict_objectives_1 = []
+        extractly_objectvies_1 = []
+        predict_objectives_2 = []
+        extractly_objectvies_2 = []
         for indi, value in zip(offspring_evaluation, result):
             indi.objectives[0],indi.objectives[1],  indi.reject, indi.cost = value
             indi.extractly_evaluated = True
             print(indi.objectives[0], indi.objectives[1])
             print(indi.objectives_predict[0], indi.objectives_predict[1])
             print("________________________")
-            predict_objectives.append(indi.objectives_predict)
-            extractly_objectvies.append(indi.objectives)
+            predict_objectives_1.append(indi.objectives_predict[0])
+            extractly_objectvies_1.append(indi.objectives[0])
+            predict_objectives_2.append(indi.objectives_predict[1])
+            extractly_objectvies_2.append(indi.objectives[1])
+        used_NFE += len(offspring_evaluation)
+        
 
         pop.update_train_data(offspring_evaluation)
         pop.natural_selection(offspring_evaluation)
@@ -238,11 +255,14 @@ def trainSurrogateNSGAII(processing_number, indi_list,  network, vnf_list, reque
         hv.append(cal_hv_front(Pareto_front_generations[-1], np.array([1, 1])))
         
         print("The he ", i+ 1, ":", hv[-1])
+        NFE_generations[i + 1] = {"NFE": used_NFE, "HV": hv[-1]}
+        surrogate_objectives[i + 1] = {"predict1": predict_objectives_1, "extractly1": extractly_objectvies_1,
+                                       "predict2": predict_objectives_2, "extractly2": extractly_objectvies_2}
 
         if len(hv) > 10:
-            if hv[-1] - hv[-10] < 0.01:
+            if hv[-1] - hv[-10] < 0.001:
                 pool.close()
                 break 
         
     pool.close()
-    return Pareto_front_generations, predict_objectives, extractly_objectvies
+    return Pareto_front_generations, NFE_generations, surrogate_objectives

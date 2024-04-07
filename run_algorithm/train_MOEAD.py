@@ -1,15 +1,10 @@
 import multiprocessing
 import random
 import sys
-import time
-
-import matplotlib.pyplot as plt
-
-from gp.population.individual import Individual
 from gp.population.population import Population
-from utils.function_operator import GenerateRandomTree
 from utils.utils import *
-
+from utils.initialization import individual_init
+from utils.selection import calculate_crowding_distance
 
 def init_weight_vectors_2d(pop_size):
     wvs = []
@@ -19,15 +14,15 @@ def init_weight_vectors_2d(pop_size):
 
 
 class MOGPDPopulation(Population):
-    def __init__(self, pop_size, functions, determining_terminals, choosing_terminals, 
+    def __init__(self, pop_size, functions, determining_terminals, ordering_terminals, choosing_terminals, 
                  min_height, max_height, initialization_max_tree_height, 
-                crossover_rate, mutation_rate,  initialize_operator, 
-                crossover_operator, mutation_operator, selection_operator,
-                neighborhood_size):
-        super().__init__(pop_size, functions, determining_terminals, choosing_terminals, 
+                 num_of_tour_particips, tournament_prob, crossover_rate, mutation_rate,
+                 determining_tree, neighborhood_size):
+        super().__init__(pop_size, 
+                 functions, determining_terminals, ordering_terminals, choosing_terminals, 
                  min_height, max_height, initialization_max_tree_height, 
-                 None, None, crossover_rate, mutation_rate,
-                initialize_operator, crossover_operator, mutation_operator, selection_operator)
+                 num_of_tour_particips, tournament_prob, crossover_rate, mutation_rate,
+                 determining_tree)
         self.neighborhood_size = neighborhood_size
         self.external_pop = []
         self.weights = init_weight_vectors_2d(self.pop_size)
@@ -41,38 +36,32 @@ class MOGPDPopulation(Population):
             for j in range(self.pop_size):
                 euclidean_distances[j] = np.linalg.norm(wv - self.weights[j])
             B[i] = np.argsort(euclidean_distances)[:self.neighborhood_size]
-        # print(B)
         return B
 
-    def reproduction(self):
-        O = []
+    def reproduction(self, crossover_operator_list, mutation_operator_list):
+        offspring = []
         for i in range(self.pop_size):
             i1, i2 = random.sample(self.neighborhoods[i].tolist(), 2)
-            child1, child2 = self.pair_reproduction(self.indivs[i1], self.indivs[i2])
-            if child1 is not None:
-                O.extend([child1, child2])
-        return O
-
-    def pair_reproduction(self, individual1, individual2):
-        operator_prob = np.random.rand()
-
-        # crossover
-        if operator_prob < self.crossover_rate:
-            o1, o2 = self.crossover_operator(individual1, individual2, self.min_height, self.max_height)
-            return o1, o2
-        # mutation
-        elif operator_prob <self.mutation_rate + self.mutation_rate:
-            o1 = self.mutation_operator(individual1, self.functions, self.determining_terminals,
-                                        self.choosing_terminals, self.min_height, self.max_height)
-            o2 = self.mutation_operator(individual2, self.functions, self.determining_terminals,
-                                        self.choosing_terminals, self.min_height, self.max_height)
-            return o1, o2
-        # # reproduction
-        # tree1 = GenerateRandomTree(self.functions, self.determining_terminals,
-        #                            self.max_height, min_height=self.min_height)
-        # tree2 = GenerateRandomTree(self.functions, self.choosing_terminals,
-        #                            self.max_height, min_height=self.min_height)
-        return None, None
+            indi1 = self.indivs[i1]
+            indi2 = self.indivs[i2]
+            if np.random.random() < self.crossover_rate:
+                for crossover_operator in crossover_operator_list:
+                    children1, children2 = crossover_operator(indi1, indi2, self.min_height, self.max_height, self.determining_tree)
+                    offspring.extend([children1, children2])
+            if np.random.random() < self.mutation_rate:
+                for mutation_operator in mutation_operator_list:
+                    mutant1 = mutation_operator(indi1, self.functions, 
+                                                self.determining_terminals, self.ordering_terminals, self.choosing_terminals, 
+                                                self.min_height, self.max_height, self.determining_tree)
+                    mutant2 = mutation_operator(indi2, self.functions, 
+                                                self.determining_terminals, self.ordering_terminals, self.choosing_terminals, 
+                                                self.min_height, self.max_height, self.determining_tree)
+                    offspring.extend([mutant1, mutant2])
+            if np.random.random() < 1 - self.crossover_rate - self.mutation_rate:
+                indi = individual_init(self.min_height, self.max_height, self.determining_tree, self.functions,
+                                       self.determining_terminals, self.ordering_terminals, self.choosing_terminals)
+                offspring.append(indi)
+        return offspring
 
     def natural_selection(self):
         self.indivs, O = self.indivs[:self.pop_size], self.indivs[self.pop_size:]
@@ -97,63 +86,73 @@ class MOGPDPopulation(Population):
                     break
             else:
                 self.external_pop.append(indi)
+        
+        ########## len(self.external_pop) = pop_size based on crowding distance
+        calculate_crowding_distance(self.external_pop)
+        self.external_pop.sort(key=lambda indi: indi.crowding_distance, reverse=True)
+        self.external_pop = self.external_pop[:self.pop_size]
 
 
 def trainMOGPD(processing_number, indi_list,  network, vnf_list, request_list,
-               functions, terminal_determining, terminal_choosing,
-               pop_size, max_gen, min_height, max_height, initialization_max_height,
-               crossover_rate, mutation_rate, neighborhood_size,
-               initialize_operator, crossover_operator, mutation_operator, selection_operator,
-               calFitness):
+                functions, terminal_determining,terminal_ordering,  terminal_choosing, 
+                pop_size, max_gen,  min_height, max_height, initialization_max_height,  
+                num_of_tour_particips, tournament_prob,crossover_rate, mutation_rate,
+                crossover_operator_list, mutation_operator_list, calFitness, determining_tree, neighborhood_size, max_NFE):
     
     # Return
+    used_NFE = 0
+    NFE_generations = {}
     Pareto_front_generations = []
+    hv = []
 
-
-    pop = MOGPDPopulation(pop_size, functions, terminal_determining, terminal_choosing, 
-                            min_height, max_height, initialization_max_height, 
-                            crossover_rate, mutation_rate,  initialize_operator, 
-                            crossover_operator, mutation_operator, selection_operator,
-                            neighborhood_size)
+    pop = MOGPDPopulation(pop_size, functions, terminal_determining, terminal_ordering, terminal_choosing, 
+                 min_height, max_height, initialization_max_height, 
+                 num_of_tour_particips, tournament_prob, crossover_rate, mutation_rate,
+                 determining_tree, neighborhood_size)
     # pop.initialize()
     pop.pre_indi_gen(indi_list)
-
-    # print("Danh sach ca the khoi tao")
-    # for indi in pop.indivs:
-    #     print(indi.determining_tree.GetHumanExpression())
-    #     print(indi.choosing_tree.GetHumanExpression())
-    # print("Khoi tao xong")
-
     pop.update_external(pop.indivs)
 
     pool = multiprocessing.Pool(processes=processing_number)
     arg = []
     for indi in pop.indivs:
         arg.append((indi, network, request_list, vnf_list))
-    print("Bat dau tinh fitness")
     result = pool.starmap(calFitness, arg)
-    # len_decision = len(pop.indivs)
     for indi, value in zip(pop.indivs, result):
-        indi.objectives[0], indi.objectives[1], indi.reject, indi.cost, a = value
-    print("Tinh fitness xong")
-    sum_gen = 0
-    for i in range(max_gen):
-        offspring = pop.reproduction()
+        indi.objectives[0], indi.objectives[1], indi.reject, indi.cost = value
+    print("Khởi tạo xong")
 
+    
+    Pareto_front_generations.append(pop.external_pop)
+    hv.append(cal_hv_front(Pareto_front_generations[-1], np.array([1, 1])))
+    used_NFE += pop.pop_size
+    NFE_generations[0] = {"NFE": used_NFE, "HV": hv[-1]}
+    print("The he 0: ", hv[-1])
+    for i in range(max_gen):
+        if used_NFE >= max_NFE:
+            pool.close()
+            break
+        offspring = pop.reproduction(crossover_operator_list, mutation_operator_list)
+        number_indi = min(max_NFE - used_NFE, len(offspring))
+        offspring = offspring[:number_indi]
         arg = []
         for indi in offspring:
             arg.append((indi, network, request_list, vnf_list))
         result = pool.starmap(calFitness, arg)
         for indi, value in zip(offspring, result):
-            indi.objectives[0], indi.objectives[1], indi.reject, indi.cost, a = value
+            indi.objectives[0], indi.objectives[1], indi.reject, indi.cost = value
 
+        used_NFE += len(offspring)
         pop.update_external(offspring)
         pop.indivs.extend(offspring)
         pop.natural_selection()
 
         Pareto_front_generations.append(pop.external_pop)
-        sum_gen = i + 1
-        print("The he ", i)
-            
+        hv.append(cal_hv_front(Pareto_front_generations[-1], np.array([1, 1])))
+        NFE_generations[i + 1] = {"NFE": used_NFE, "HV": hv[-1]}
+        print("The he ", i + 1, ": ", hv[-1])
+        if len(hv) > 10:
+            if np.mean(hv[-10:]) - hv[-1] < 0.001:
+                break  
     pool.close()
-    return Pareto_front_generations
+    return Pareto_front_generations, NFE_generations

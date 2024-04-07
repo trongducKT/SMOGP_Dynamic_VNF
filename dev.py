@@ -16,8 +16,8 @@ if __name__ == '__main__':
     multiprocessing.freeze_support()
     num_pro = 10
     num_train = 10
-    pop_size = 50
-    max_gen = 15
+    pop_size = 4
+    max_gen = 2
     min_height = 2
     max_height = 8
     initialization_max_height = 4
@@ -30,7 +30,11 @@ if __name__ == '__main__':
     crossover_operator_list = [crossover_branch_individual_swap]
     mutation_operator_list = [mutation_individual_branch_replace, mutation_individual_node_replace]
     neighborhood_size = 3
-    data_set = [r'data_1_9\nsf_rural_normal_s3.json']
+    max_NFE = 500
+    data_set = [r'data_1_9/nsf_centers_easy_s3.json', r'data_1_9/conus_centers_easy_s3.json', r'data_1_9/conus_centers_normal_s3.json', r'data_1_9/conus_centers_hard_s3.json', 
+                r'data_1_9/conus_rural_easy_s3.json', r'data_1_9/conus_rural_normal_s3.json', r'data_1_9/conus_rural_hard_s3.json',
+                r'data_1_9/conus_uniform_easy_s3.json', r'data_1_9/conus_uniform_normal_s3.json', r'data_1_9/conus_uniform_hard_s3.json',
+                r'data_1_9/conus_urban_easy_s3.json', r'data_1_9/conus_urban_normal_s3.json', r'data_1_9/conus_urban_hard_s3.json',]
     for data_path in data_set:
         data = Read_data(data_path)
         ram_max_server, cpu_max_server, mem_max_server, sum_ram_server, sum_cpu_server, sum_mem_server, ram_max_vnf, cpu_max_vnf, mem_max_vnf, max_bandwidth = data.get_info_network()
@@ -78,21 +82,81 @@ if __name__ == '__main__':
                                       min_height, max_height, initialization_max_height, num_of_tour_particips,
                                       tournament_prob, pc, pm, None, surrogate, rule_ref, num_neigbor)
         pop.random_init()
-        print("Vector pc")
-        for indi in pop.indivs:
-            print(indi.pc)
-        print("Kết thúc in")
-        # objective_json, tree_json, test_objectives_json, extract_surrogate = run_SurrogateNSGAII(data_path, num_pro, pop.indivs, num_train, function, terminal_determining, terminal_ordering,
-        #                     terminal_choosing, pop_size, max_gen, min_height, max_height, initialization_max_height,
-        #                     num_of_tour_particips, tournament_prob, pc, pm, crossover_operator_list, mutation_operator_list,
-        #                     num_neigbor, surrogate, rule_ref, calFitness_three_policies, determining_tree)
+        objective_json, tree_json, test_objectives_json, NFE_generation, surrogate_objective = run_SurrogateNSGAII(data_path, num_pro, pop.indivs, num_train, function, terminal_determining, terminal_ordering,
+                            terminal_choosing, pop_size, max_gen, min_height, max_height, initialization_max_height,
+                            num_of_tour_particips, tournament_prob, pc, pm, crossover_operator_list, mutation_operator_list,
+                            num_neigbor, surrogate, rule_ref, calFitness_three_policies, determining_tree, max_NFE)
+    
+        name_store = "Result/Pareto_tree_history/Surrogate/" + data_path[9:-5] + ".json"
+        with open(name_store, 'w') as f:
+            json.dump(tree_json, f)
+        name_store = "Result/Pareto_objective_history/Surrogate/" + data_path[9:-5] + ".json"
+        with open(name_store, 'w') as f:
+            json.dump(objective_json, f)
+        name_store = "Result/Test_result/Surrogate/" + data_path[9:-5] + ".json"
+        with open(name_store, 'w') as f:
+            json.dump(test_objectives_json, f)
+        name_store = "Result/NFE/Surrogate/" + data_path[9:-5] + ".json"
+        with open(name_store, 'w') as f:
+            json.dump(NFE_generation, f)
+        name_store = "Result/Surrogate_evaluation/" + data_path[9:-5] + ".json"
+        with open(name_store, 'w') as f:
+            json.dump(surrogate_objective, f)
 
-
-        # name_path = "surrogate_value.json"
-        # with open(name_path, 'w') as f:
-        #     json.dump(extract_surrogate, f)
-        objective_json, tree_json, test_objectives_json = run_NSGAII( data_path, num_pro, pop.indivs, num_train,  
+        
+        objective_json, tree_json, test_objectives_json, NFE_generation = run_NSGAII( data_path, num_pro, pop.indivs, num_train,  
                 function, terminal_determining, terminal_ordering, terminal_choosing, 
                 pop_size, max_gen,  min_height, max_height, initialization_max_height,  
                 num_of_tour_particips, tournament_prob, pc, pm,
-                crossover_operator_list, mutation_operator_list, calFitness_three_policies, None)
+                crossover_operator_list, mutation_operator_list, calFitness_three_policies, None, max_NFE)
+    
+        name_store = "Result/Pareto_tree_history/NSGAII/" + data_path[9:-5] + ".json"
+        with open(name_store, 'w') as f:
+            json.dump(tree_json, f)
+        name_store = "Result/Pareto_objective_history/NSGAII/" + data_path[9:-5] + ".json"
+        with open(name_store, 'w') as f:
+            json.dump(objective_json, f)
+        name_store = "Result/Test_result/NSGAII/" + data_path[9:-5] + ".json"
+        with open(name_store, 'w') as f:
+            json.dump(test_objectives_json, f)
+        name_store = "Result/NFE/NSGAII/" + data_path[9:-5] + ".json"
+        with open(name_store, 'w') as f:
+            json.dump(NFE_generation, f)
+        
+        objective_json, tree_json, test_objectives_json, NFE_generation = run_MOEAD( data_path, num_pro, pop.indivs, num_train,  
+                function, terminal_determining, terminal_ordering, terminal_choosing, 
+                pop_size, max_gen,  min_height, max_height, initialization_max_height,  
+                num_of_tour_particips, tournament_prob, pc, pm,
+                crossover_operator_list, mutation_operator_list, calFitness_three_policies, None, 3, max_NFE)
+        
+        name_store = "Result/Pareto_tree_history/MOEAD/" + data_path[9:-5] + ".json"
+        with open(name_store, 'w') as f:
+            json.dump(tree_json, f)
+        name_store = "Result/Pareto_objective_history/MOEAD/" + data_path[9:-5] + ".json"
+        with open(name_store, 'w') as f:
+            json.dump(objective_json, f)
+        name_store = "Result/Test_result/MOEAD/" + data_path[9:-5] + ".json"
+        with open(name_store, 'w') as f:
+            json.dump(test_objectives_json, f)
+        name_store = "Result/NFE/MOEAD/" + data_path[9:-5] + ".json"
+        with open(name_store, 'w') as f:
+            json.dump(NFE_generation, f)
+
+        objective_json, tree_json, test_objectives_json, NFE_generation = run_SPEA( data_path, num_pro, pop.indivs, num_train,  
+                function, terminal_determining, terminal_ordering, terminal_choosing, 
+                pop_size, max_gen,  min_height, max_height, initialization_max_height,  
+                num_of_tour_particips, tournament_prob, pc, pm,
+                crossover_operator_list, mutation_operator_list, calFitness_three_policies, None, max_NFE)
+        
+        name_store = "Result/Pareto_tree_history/SPEA/" + data_path[9:-5] + ".json"
+        with open(name_store, 'w') as f:
+            json.dump(tree_json, f)
+        name_store = "Result/Pareto_objective_history/SPEA/" + data_path[9:-5] + ".json"
+        with open(name_store, 'w') as f:
+            json.dump(objective_json, f)
+        name_store = "Result/Test_result/SPEA/" + data_path[9:-5] + ".json"
+        with open(name_store, 'w') as f:
+            json.dump(test_objectives_json, f)
+        name_store = "Result/NFE/SPEA/" + data_path[9:-5] + ".json"
+        with open(name_store, 'w') as f:
+            json.dump(NFE_generation, f)

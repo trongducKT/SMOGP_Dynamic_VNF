@@ -50,8 +50,11 @@ def trainNSGAII(processing_number, indi_list,  network, vnf_list, request_list,
                 functions, terminal_determining,terminal_ordering,  terminal_choosing, 
                 pop_size, max_gen,  min_height, max_height, initialization_max_height,  
                 num_of_tour_particips, tournament_prob,crossover_rate, mutation_rate,
-                crossover_operator_list, mutation_operator_list, calFitness, determining_tree):
+                crossover_operator_list, mutation_operator_list, calFitness, determining_tree, max_NFE):
     
+    
+    used_NFE = 0
+    NFE_generations = {}
     Pareto_front_generations = []
     hv = []
     pop = NSGAPopulation(pop_size, functions, terminal_determining, terminal_ordering, terminal_choosing, 
@@ -72,9 +75,16 @@ def trainNSGAII(processing_number, indi_list,  network, vnf_list, request_list,
     pop.natural_selection()
     Pareto_front_generations.append([indi for indi in pop.indivs if indi.rank == 0]) 
     hv.append(cal_hv_front(Pareto_front_generations[-1], np.array([1, 1])))
-    print("The he 0: ", hv[-1])       
+    print("The he 0: ", hv[-1])
+    used_NFE += pop.pop_size
+    NFE_generations[0] = {"NFE": used_NFE, "HV": hv[-1]}     
     for i in range(max_gen):
+        if used_NFE >= max_NFE:
+            pool.close()
+            break
         offspring = pop.gen_offspring(crossover_operator_list, mutation_operator_list)
+        number_indi = min(max_NFE - used_NFE, len(offspring))
+        offspring = offspring[:number_indi]
         arg = []
 
         for indi in offspring:
@@ -82,17 +92,20 @@ def trainNSGAII(processing_number, indi_list,  network, vnf_list, request_list,
         result = pool.starmap(calFitness, arg)
         for indi, value in zip(offspring, result):
             indi.objectives[0],indi.objectives[1],  indi.reject, indi.cost = value
+        
+        used_NFE += len(offspring)
         pop.indivs.extend(offspring)
         pop.natural_selection()    
         Pareto_front_generations.append([indi for indi in pop.indivs if indi.rank == 0])
         hv.append(cal_hv_front(Pareto_front_generations[-1], np.array([1, 1])))  
         print("The he ", i+1, ": ", hv[-1])
+        NFE_generations[i + 1] = {"NFE": used_NFE, "HV": hv[-1]}
         if len(hv) > 10:
-            if hv[-1] - hv[-10] < 0.01:
+            if hv[-1] - hv[-10] < 0.001:
                 pool.close()
                 break        
     pool.close()
-    return Pareto_front_generations
+    return Pareto_front_generations, NFE_generations
 
 
 # Pareto front across generations (list of Individuals)
