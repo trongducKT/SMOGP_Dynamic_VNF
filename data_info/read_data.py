@@ -2,6 +2,7 @@ import json
 from network.network import Node, Link
 from network.requests import Request
 from network.vnf import VNF
+from utils.utils import get_info_link, get_info_server, get_info_vnf
 
 class Read_data:
     def __init__(self, PATH):
@@ -69,3 +70,14 @@ class Read_data:
             r_list.append(request)
             name = name + 1
         return r_list
+    
+    def get_info_network(self):
+        server_list = self.get_V()
+        link_list = self.get_E()
+        vnf_list = self.get_F()
+        print(len(server_list), len(link_list), len(vnf_list))
+        ram_max_server, cpu_max_server, mem_max_server, sum_ram_server, sum_cpu_server, sum_mem_server = get_info_server(server_list)
+        ram_max_vnf, cpu_max_vnf, mem_max_vnf = get_info_vnf(vnf_list)
+        max_bandwidth = get_info_link(link_list)
+        return ram_max_server, cpu_max_server, mem_max_server, sum_ram_server, sum_cpu_server, sum_mem_server, ram_max_vnf, cpu_max_vnf, mem_max_vnf, max_bandwidth
+

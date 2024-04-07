@@ -2,64 +2,8 @@ from .baseline import Node
 import numpy as np
 
 
-# Decision policy
-
-class ARRS(Node):
-    def __init__(self):
-        super(ARRS, self).__init__()
-    def __repr__(self):
-        return "ARRS"
-    def _GetHumanExpressionSpecificNode(self, args):
-        return "ARRS"
-    def getSymbol(self):
-        return 1
-    def GetOutput(self, X):
-        return X.VNFs_request_resource["ram"]/len(X.r.VNFs)
-    def GetSurrogateOutput(self, X):
-        return X.ARRS
-
-class ACRS(Node):
-    def __init__(self):
-        super(ACRS, self).__init__()
-    def __repr__(self):
-        return "ACRS"
-    def _GetHumanExpressionSpecificNode(self, args):
-        return "ACRS"
-    def getSymbol(self):
-        return 2
-    def GetOutput(self, X):
-        return X.VNFs_request_resource["cpu"]/len(X.r.VNFs)
-    def GetSurrogateOutput(self, X):
-        return X.ACRS
-
-class AMRS(Node):
-    def __init__(self):
-        super(AMRS, self).__init__()
-    def __repr__(self):
-        return "AMRS"
-    def _GetHumanExpressionSpecificNode(self, args):
-        return "AMRS"
-    def getSymbol(self):
-        return 3
-    def GetOutput(self, X):
-        return X.VNFs_request_resource["mem"]/len(X.r.VNFs)
-    def GetSurrogateOutput(self, X):
-        return X.AMRS
-
-class Accepted_Node(Node):
-    def __init__(self, accepted_value):
-        super(Accepted_Node, self).__init__()
-        self.accepted_value = accepted_value
-    def __repr__(self):
-        return "Accepted_Node"
-    def _GetHumanExpressionSpecificNode(self, args):
-        return "Accepted_Node"
-    def getSymbol(self):
-        return 4
-    def GetOutput(self, X):
-        return self.accepted_value
-    def GetSurrogateOutput(self, X):
-        return X.Accepted_Node
+##############################################################
+# Properties are normalized to [0,1] before being used in GP #
 # Due date of request 
 class DDR(Node):
     def __init__(self):
@@ -69,84 +13,187 @@ class DDR(Node):
     def _GetHumanExpressionSpecificNode(self, args):
         return "DDR"
     def getSymbol(self):
-        return 10
+        return "DDR"
     def GetOutput(self, X):
-        return (X.r.lifetime - X.T)
+        return (X.r.lifetime - X.T)/X.r.lifetime
     
     def GetSurrogateOutput(self, X):
         return X.DDR
     
 # Bandwidth of request
 class BR(Node):
-    def __init__(self):
+    def __init__(self, max_bandwidth_network):
          super(BR,self).__init__()
+         self.max_bandwidth_network = max_bandwidth_network
     def __repr__(self):
         return "BR"
     def _GetHumanExpressionSpecificNode(self, args):
         return "BR"
     def getSymbol(self):
-        return 11    
+        return "BR"  
 
     def GetOutput(self, X):
-        return X.r.bw
+        return X.r.bw/self.max_bandwidth_network
     
     def GetSurrogateOutput(self, X):
-        return X.BR
+        return X.BR/ self.max_bandwidth_network
+
 
 # sum of Ram of request
 class RRS(Node):
-    def __init__(self):
+    def __init__(self, sum_ram_network):
         super(RRS,self).__init__()
+        self.sum_ram_network = sum_ram_network
     def __repr__(self):
         return "RRS"
     def _GetHumanExpressionSpecificNode(self, args):
         return "RRS"
     
     def getSymbol(self):
-        return 12
+        return "RRS"
     
     def GetOutput(self, X):
-        return X.VNFs_request_resource["ram"]
+        return X.VNFs_request_resource["ram"]/self.sum_ram_network
     
     def GetSurrogateOutput(self, X):
-        return X.RRS
+        return X.RRS/ self.sum_ram_network
     
 # sum of CPU of request
 class CRS(Node):
-    def __init__(self):
+    def __init__(self, sum_cpu_network):
         super(CRS,self).__init__()
+        self.sum_cpu_network = sum_cpu_network
     def __repr__(self):
         return "CRS"
     def _GetHumanExpressionSpecificNode(self, args):
         return "CRS"
 
     def getSymbol(self):
-        return 13
+        return "CRS"
     def GetOutput(self, X):
-        return X.VNFs_request_resource["cpu"]
+        return X.VNFs_request_resource["cpu"]/self.sum_cpu_network
     
     def GetSurrogateOutput(self, X):
-        return X.CRS
+        return X.CRS/ self.sum_cpu_network
     
 # sum of memory of request
 class MRS(Node):
-    def __init__(self):
+    def __init__(self, sum_mem_network):
         super(MRS, self).__init__()
+        self.sum_mem_network = sum_mem_network
     def __repr__(self):
         return "MRS"
     def _GetHumanExpressionSpecificNode(self, args):
         return "MRS"
     def getSymbol(self):
-        return 14
+        return "MRS"
     def GetOutput(self, X):
-        return X.VNFs_request_resource["mem"]
+        return X.VNFs_request_resource["mem"]/self.sum_mem_network
     def GetSurrogateOutput(self, X):
-        return X.MRS
+        return X.MRS/ self.sum_mem_network
+    
+# RAM of first VNF in request
+class FirstVNF_RAM(Node):
+    def __init__(self, max_ram_VNF):
+        super(FirstVNF_RAM, self).__init__()
+        self.max_ram_VNF = max_ram_VNF
+    def __repr__(self):
+        return "FirstVNF_RAM"
+    def _GetHumanExpressionSpecificNode(self, args):
+        return "FirstVNF_RAM"
+    def getSymbol(self):
+        return "FirstVNF_RAM"
+    def GetOutput(self, X):
+        return X.first_VNF_requirement["ram"]/self.max_ram_VNF
+    def GetSurrogateOutput(self, X):
+        return X.FirstVNF_RAM/self.max_ram_VNF
+    
+# CPU of first VNF in request
+class FirstVNF_CPU(Node):
+    def __init__(self, max_cpu_VNF):
+        super(FirstVNF_CPU, self).__init__()
+        self.max_cpu_VNF = max_cpu_VNF
+    def __repr__(self):
+        return "FirstVNF_CPU"
+    def _GetHumanExpressionSpecificNode(self, args):
+        return "FirstVNF_CPU"
+    def getSymbol(self):
+        return "FirstVNF_CPU"
+    def GetOutput(self, X):
+        return X.first_VNF_requirement["cpu"]/self.max_cpu_VNF
+    def GetSurrogateOutput(self, X):
+        return X.FirstVNF_CPU/self.max_cpu_VNF
+
+# Mem of first VNF in request
+class FirstVNF_Mem(Node):
+    def __init__(self, max_mem_VNF):
+        super(FirstVNF_Mem, self).__init__()
+        self.max_mem_VNF = max_mem_VNF
+    def __repr__(self):
+        return "FirstVNF_Mem"
+    def _GetHumanExpressionSpecificNode(self, args):
+        return "FirstVNF_Mem"
+    def getSymbol(self):
+        return "FirstVNF_Mem"
+    def GetOutput(self, X):
+        return X.first_VNF_requirement["mem"]/self.max_mem_VNF
+    def GetSurrogateOutput(self, X):
+        return X.FirstVNF_Mem/self.max_mem_VNF
+    
+# Max RAM of server that can be used for first VNF in request
+class FirstVNF_RAM_Server(Node):
+    def __init__(self, max_ram_server):
+        super(FirstVNF_RAM_Server, self).__init__()
+        self.max_ram_server = max_ram_server
+    def __repr__(self):
+        return "FirstVNF_RAM_Server"
+    def _GetHumanExpressionSpecificNode(self, args):
+        return "FirstVNF_RAM_Server"
+    def getSymbol(self):
+        return "FirstVNF_RAM_Server"
+    def GetOutput(self, X):
+        return X.VNFs_resource[X.r.VNFs[0]]["ram"]/self.max_ram_server
+    def GetSurrogateOutput(self, X):
+        return X.FirstVNF_RAM_Server/ self.max_ram_server
+    
+# Max CPU of server that can be used for first VNF in request
+class FirstVNF_CPU_Server(Node):
+    def __init__(self, max_cpu_server):
+        super(FirstVNF_CPU_Server, self).__init__()
+        self.max_cpu_server = max_cpu_server
+    def __repr__(self):
+        return "FirstVNF_CPU_Server"
+    def _GetHumanExpressionSpecificNode(self, args):
+        return "FirstVNF_CPU_Server"
+    def getSymbol(self):
+        return "FirstVNF_CPU_Server"
+    def GetOutput(self, X):
+        return X.VNFs_resource[X.r.VNFs[0]]["cpu"]/self.max_cpu_server
+    def GetSurrogateOutput(self, X):
+        return X.FirstVNF_CPU_Server/ self.max_cpu_server
+
+# Max Mem of server that can be used for first VNF in request
+class FirstVNF_Mem_Server(Node):
+    def __init__(self, max_mem_server):
+        super(FirstVNF_Mem_Server, self).__init__()
+        self.max_mem_server = max_mem_server
+    def __repr__(self):
+        return "FirstVNF_Mem_Server"
+    def _GetHumanExpressionSpecificNode(self, args):
+        return "FirstVNF_Mem_Server"
+    def getSymbol(self):
+        return "FirstVNF_Mem_Server"
+    def GetOutput(self, X):
+        return X.VNFs_resource[X.r.VNFs[0]]["mem"]/self.max_mem_server
+    def GetSurrogateOutput(self, X):
+        return X.FirstVNF_Mem_Server/self.max_mem_server
+    
     
 # average of max_RAM that can be used in server of request
 class ARS(Node):
-    def __init__(self):
+    def __init__(self, max_ram_server):
         super(ARS, self).__init__()
+        self.max_ram_server = max_ram_server
         
     def __repr__(self):
         return "ARS"
@@ -154,57 +201,59 @@ class ARS(Node):
         return "ARS"
 
     def getSymbol(self):
-        return 15
+        return "ARS"
     def GetOutput(self, X):
         temp = 0
         for vnf in X.r.VNFs:
             temp += X.VNFs_resource[vnf]["ram"]
-        return temp/len(X.r.VNFs)
+        return temp/len(X.r.VNFs)/self.max_ram_server
     
     def GetSurrogateOutput(self, X):
-        return X.ARS
+        return X.ARS/ self.max_ram_server
     
 # average of max_CPU that can be used in server of request
-class CRS(Node):
-    def __init__(self):
-        super(CRS, self).__init__()
+class ACS(Node):
+    def __init__(self, max_cpu_server):
+        super(ACS, self).__init__()
+        self.max_cpu_server = max_cpu_server
         
     def __repr__(self):
-        return "CRS"
+        return "ACS"
     def _GetHumanExpressionSpecificNode(self, args):
-        return "CRS"
+        return "ACS"
 
     def getSymbol(self):
-        return 16
+        return "ACS"
     def GetOutput(self, X):
         temp = 0
         for vnf in X.r.VNFs:
             temp += X.VNFs_resource[vnf]["cpu"]
-        return temp/len(X.r.VNFs)
+        return temp/len(X.r.VNFs)/self.max_cpu_server
     
     def GetSurrogateOutput(self, X):
-        return X.CRS
+        return X.ACS/ self.max_cpu_server
     
 # average of max_Mem that can be used in server of request
 
-class MRS(Node):
-    def __init__(self):
-        super(MRS, self).__init__()
+class AMS(Node):
+    def __init__(self, max_mem_server):
+        super(AMS, self).__init__()
+        self.max_mem_server = max_mem_server
         
     def __repr__(self):
-        return "MRS"
+        return "AMS"
     def _GetHumanExpressionSpecificNode(self, args):
-        return "MRS"
+        return "AMS"
     def getSymbol(self):
-        return 17
+        return "AMS"
     def GetOutput(self, X):
         temp = 0
         for vnf in X.r.VNFs:
             temp += X.VNFs_resource[vnf]["mem"]
-        return temp/len(X.r.VNFs) 
+        return temp/len(X.r.VNFs)/self.max_mem_server 
 
     def GetSurrogateOutput(self, X):
-        return X.MRS 
+        return X.AMS / self.max_mem_server
     
 
 # max_delay in server of request
@@ -216,43 +265,15 @@ class MDR(Node):
     def _GetHumanExpressionSpecificNode(self, args):
         return "MDR"
     def getSymbol(self):
-        return 18
+        return "MDR"
     def GetOutput(self, X):
         temp = 0
         for vnf in X.r.VNFs:
             temp += X.VNF_max_delay[vnf]
-        return temp  
+        return temp  / X.r.lifetime 
     
     def GetSurrogateOutput(self, X):
         return X.MDR
-    
-    
-class Rand(Node):
-    def __init__(self):
-        super(Rand, self).__init__()
-    def __repr__(self):
-        return "Rand"
-    def _GetHumanExpressionSpecificNode(self, args):
-        return "Rand"
-    def getSymbol(self):
-        return 19
-    def GetOutput(self, X):
-        return np.random.rand()
-    
-class Const(Node):
-    def __init__(self):
-        super(Const, self).__init__()
-        self.value = np.random.normal(0, 1)
-    def __repr__(self):
-        return "Const"
-    def _GetHumanExpressionSpecificNode(self, args):
-        return "Const"
-    def getSymbol(self):
-        return 20
-    def GetOutput(self, X):
-        return self.value
-    def GetSurrogateOutput(self, X):
-        return self.value
     
 # push_back number of request
 class PN(Node):
@@ -263,39 +284,98 @@ class PN(Node):
     def _GetHumanExpressionSpecificNode(self, args):
         return "PN"
     def getSymbol(self):
-        return 21
+        return "PN"
     def GetOutput(self, X):
-        return X.r.push_number
+        return X.r.push_number/X.r.lifetime
     def GetSurrogateOutput(self, X):
         return X.PN
 
-class FIFO_DD(Node):
-    def __init__(self):
-        super(FIFO_DD, self).__init__()
-    def __repr__(self):
-        return "FIFO_DD"
-    def _GetHumanExpressionSpecificNode(self, args):
-        return "FIFO_DD"
-    
-    def getSymbol(self):
-        return 22
-    def GetOutput(self, X):
-        temp = X.r.lifetime - X.T
-        rand = temp * np.random.uniform(0,1)
-        return -(temp + rand)
-    
-class MinDD(Node):
-    def __init__(self):
-        super(MinDD, self).__init__()
-    def __repr__(self):
-        return "MinDD"
-    def _GetHumanExpressionSpecificNode(self, args):
-        return "MinDD"
-    def getSymbol(self):
-        return 23
-    def GetOutput(self, X):
-        return -(X.r.lifetime-X.T)               
+# class ARRS(Node):
+#     def __init__(self):
+#         super(ARRS, self).__init__()
+#     def __repr__(self):
+#         return "ARRS"
+#     def _GetHumanExpressionSpecificNode(self, args):
+#         return "ARRS"
+#     def getSymbol(self):
+#         return "ARRS"
+#     def GetOutput(self, X):
+#         return X.VNFs_request_resource["ram"]/len(X.r.VNFs)
+#     def GetSurrogateOutput(self, X):
+#         return X.ARRS
 
+# class ACRS(Node):
+#     def __init__(self):
+#         super(ACRS, self).__init__()
+#     def __repr__(self):
+#         return "ACRS"
+#     def _GetHumanExpressionSpecificNode(self, args):
+#         return "ACRS"
+#     def getSymbol(self):
+#         return "ACRS"
+#     def GetOutput(self, X):
+#         return X.VNFs_request_resource["cpu"]/len(X.r.VNFs)
+#     def GetSurrogateOutput(self, X):
+#         return X.ACRS
+
+# class AMRS(Node):
+#     def __init__(self):
+#         super(AMRS, self).__init__()
+#     def __repr__(self):
+#         return "AMRS"
+#     def _GetHumanExpressionSpecificNode(self, args):
+#         return "AMRS"
+#     def getSymbol(self):
+#         return "AMRS"
+#     def GetOutput(self, X):
+#         return X.VNFs_request_resource["mem"]/len(X.r.VNFs)
+#     def GetSurrogateOutput(self, X):
+#         return X.AMRS
+
+class Accepted_Node(Node):
+    def __init__(self, accepted_value):
+        super(Accepted_Node, self).__init__()
+        self.accepted_value = accepted_value
+    def __repr__(self):
+        return "Accepted_Node"
+    def _GetHumanExpressionSpecificNode(self, args):
+        return "Accepted_Node"
+    def getSymbol(self):
+        return "Accepted_Node"
+    def GetOutput(self, X):
+        return self.accepted_value
+    def GetSurrogateOutput(self, X):
+        return X.Accepted_Node
+    
+ ##############################################################   
+class Rand(Node):
+    def __init__(self):
+        super(Rand, self).__init__()
+    def __repr__(self):
+        return "Rand"
+    def _GetHumanExpressionSpecificNode(self, args):
+        return "Rand"
+    def getSymbol(self):
+        return "Rand"
+    def GetOutput(self, X):
+        return np.random.rand()
+      
+class Const(Node):
+    def __init__(self):
+        super(Const, self).__init__()
+        self.value = np.random.uniform(0, 1)
+    def __repr__(self):
+        return "Const"
+    def _GetHumanExpressionSpecificNode(self, args):
+        return "Const"
+    def getSymbol(self):
+        return "Const"
+    def GetOutput(self, X):
+        return self.value
+    def GetSurrogateOutput(self, X):
+        return self.value            
+
+####################################################################
 # Chosing server policy
 
 # The remain of CPU in server
@@ -307,9 +387,9 @@ class RCSe(Node):
     def _GetHumanExpressionSpecificNode(self, args):
         return "RCSe"
     def getSymbol(self):    
-        return 24
+        return "RCSe"
     def GetOutput(self, X):
-        return X.server_state["cpu"]
+        return X.server_state["cpu"]/X.cpu_capacity
     def GetSurrogateOutput(self, X):
         return X.RCSe
     
@@ -322,9 +402,9 @@ class RRSe(Node):
     def _GetHumanExpressionSpecificNode(self, args):
         return "RRSe"
     def getSymbol(self):
-        return 25
+        return "RRSe"
     def GetOutput(self, X):
-        return X.server_state["ram"]
+        return X.server_state["ram"]/X.ram_capacity
     def GetSurrogateOutput(self, X):
         return X.RRSe
     
@@ -337,9 +417,9 @@ class  RMSe(Node):
     def _GetHumanExpressionSpecificNode(self, args):
         return "RMSe"
     def getSymbol(self):
-        return 26
+        return "RMSe"
     def GetOutput(self, X):
-        return X.server_state["mem"]
+        return X.server_state["mem"]/X.mem_capacity
     def GetSurrogateOutput(self, X):
         return X.RMSe
     
@@ -352,7 +432,7 @@ class MLU(Node):
     def _GetHumanExpressionSpecificNode(self, args):
         return "MLU"
     def getSymbol(self):
-        return 27
+        return "MLU"
     def GetOutput(self, X):
         return X.MLU
     def GetSurrogateOutput(self, X):
@@ -360,19 +440,18 @@ class MLU(Node):
     
 # The cost of server
 class CS(Node):
-    def __init(self):
+    def __init__(self):
         super(CS, self).__init__()
     def __repr__(self):
         return "CS"
     def _GetHumanExpressionSpecificNode(self, args):
         return "CS"
     def getSymbol(self):
-        return 28
+        return "CS"
     def GetOutput(self, X):
         return X.cost
     def GetSurrogateOutput(self, X):
         return X.CS
-
 
 # The max delay to server
 class DS(Node):
@@ -383,9 +462,9 @@ class DS(Node):
     def _GetHumanExpressionSpecificNode(self, args):
         return "DS"
     def getSymbol(self):
-        return 29
+        return "DS"
     def GetOutput(self, X):
-        return X.delay
+        return X.delay/X.request_lifetime
     def GetSurrogateOutput(self, X):
         return X.DS
 # The max utilization of CPU in server
@@ -399,7 +478,7 @@ class MUC(Node):
         return "MUC"
 
     def getSymbol(self):
-        return 30
+        return "MUC"
     def GetOutput(self, X):
         return 1-X.MRU["cpu"]
     def GetSurrogateOutput(self, X):
@@ -415,7 +494,7 @@ class MUR(Node):
     def _GetHumanExpressionSpecificNode(self, args):
         return "MUR"
     def getSymbol(self):
-        return 31
+        return "MUR"
 
     def GetOutput(self, X):
         return 1-X.MRU["ram"]
@@ -432,68 +511,11 @@ class MUM(Node):
     def _GetHumanExpressionSpecificNode(self, args):
         return "MUM"
     def getSymbol(self):
-        return 32
+        return "MUM"
     def GetOutput(self, X):
         return 1-X.MRU["mem"]
     def GetSurrogateOutput(self, X):
         return X.MUM
-    
-    
-class MinCost(Node):
-    def __init__(self):
-        super(MinCost, self).__init__()
-    def __repr__(self):
-        return "MinCost"
-    def _GetHumanExpressionSpecificNode(self, args):
-        return "MinCost"
-    
-    def getSymbol(self):
-        return 33
-    def GetOutput(self, X):
-        return -X.cost
-    
-class Relax(Node):
-    def __init__(self):
-        super(Relax, self).__init__()
-    def __repr__(self):
-        return "Relax"
-    def _GetHumanExpressionSpecificNode(self, args):
-        return "Relax"
-    
-    def getSymbol(self):
-        return 34
-    def GetOutput(self, X):
-        temp = 1-X.MRU["mem"] + 1-X.MRU["ram"] + 1-X.MRU["cpu"]
-        temp = temp/3
-        return temp
-
-class  CS_Relax(Node):
-    def __init__(self):
-        super(CS_Relax, self).__init__()
-    def __repr__(self):
-        return "CS_Relax"
-    def _GetHumanExpressionSpecificNode(self, args):
-        return "CS_Relax"
-
-    def getSymbol(self):
-        return 35
-    def GetOutput(self, X):
-        temp = 1-X.MRU["mem"] + 1-X.MRU["ram"] + 1-X.MRU["cpu"]
-        temp = temp/3
-        return -X.cost/1000 + temp 
-
-class Scale(Node):
-    def __init__(self):
-        super(Scale, self).__init__()
-    def __repr__(self):
-        return "Scale"
-    def _GetHumanExpressionSpecificNode(self, args):
-        return "Scale"
-
-    def getSymbol(self):
-        return 36
-    def GetOutput(self, X):
-        return 1 
     
 class Zero_Node(Node):
     def __init__(self):
@@ -503,7 +525,7 @@ class Zero_Node(Node):
     def _GetHumanExpressionSpecificNode(self, args):
         return "Zero_Node"
     def getSymbol(self):
-        return 37
+        return "Zero_Node"
     def GetOutput(self, X):
         return 0
     def GetSurrogateOutput(self, X):

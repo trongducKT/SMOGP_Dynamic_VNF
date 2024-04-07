@@ -160,6 +160,44 @@ def get_max_cost_request(vnf_list, request_list):
     
     return sum_max_cost
 
+def get_info_server(server_list):
+    ram_max = -np.inf
+    cpu_max = -np.inf
+    mem_max = -np.inf
+    sum_ram = 0
+    sum_cpu = 0
+    sum_mem = 0
+    for server in server_list:
+        if server.type == 1:
+            continue
+        ram = server.cap["ram_cap"]
+        cpu = server.cap["cpu_cap"]
+        mem = server.cap["memory_cap"]
+
+        ram_max = max(ram_max, ram)
+        cpu_max = max(cpu_max, cpu)
+        mem_max = max(mem_max, mem)
+        sum_ram += ram
+        sum_cpu += cpu
+        sum_mem += mem
+    return ram_max, cpu_max, mem_max, sum_ram, sum_cpu, sum_mem
+
+def get_info_vnf(vnf_list):
+    ram_max = -np.inf
+    cpu_max = -np.inf
+    mem_max = -np.inf
+    for vnf in vnf_list:
+        ram_max = max(ram_max, vnf.r_f)
+        cpu_max = max(cpu_max, vnf.c_f)
+        mem_max = max(mem_max, vnf.h_f)
+    return ram_max, cpu_max, mem_max
+
+def get_info_link(list_link):
+    max_bandwidth = -np.inf
+    for link in list_link:
+        max_bandwidth = max(max_bandwidth, link.cap)
+    return max_bandwidth
+
 def checkChange(history):
     if len(history) < 20:
         return False

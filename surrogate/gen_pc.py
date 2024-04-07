@@ -19,32 +19,69 @@ def ranking_index(value_list):
     return index_list
 
 class Request_Surrogate:
-    def __init__(self, DDR, BR, RRS, CRS, MRS, ARS, ACS, AMS, MDR, PN):
+    def __init__(self, DDR,BR, RRS, CRS, MRS, FirstVNF_RAM, FirstVNF_CPU,
+                 FirstVNF_Mem, FirstVNF_RAM_Server, FirstVNF_CPU_Server, FirstVNF_Mem_Server,
+                 ARS, ACS, AMS, MDR, PN):
         self.DDR = DDR
         self.BR = BR
         self.RRS = RRS
         self.CRS = CRS
         self.MRS = MRS
+        self.FirstVNF_RAM = FirstVNF_RAM
+        self.FirstVNF_CPU = FirstVNF_CPU
+        self.FirstVNF_Mem = FirstVNF_Mem
+        self.FirstVNF_RAM_Server = FirstVNF_RAM_Server
+        self.FirstVNF_CPU_Server = FirstVNF_CPU_Server
+        self.FirstVNF_Mem_Server = FirstVNF_Mem_Server
         self.ARS = ARS
         self.ACS = ACS
         self.AMS = AMS
         self.MDR = MDR
         self.PN = PN
     
-    def gen_random(self):
-        self.DDR = random.randint(0, 10)
-        self.BR = random.uniform(30, 100)
-        self.RRS = random.uniform(0, 10)
-        self.CRS = random.uniform(0, 10)
-        self.MRS = random.uniform(0, 10)
-        self.ARS = random.uniform(0, 100)
-        self.ACS = random.uniform(0, 100)
-        self.AMS = random.uniform(0, 100)
-        self.MDR = random.uniform(0, 100)
-        self.PN = random.uniform(0, 10)
+    # def gen_random(self):
+    #     self.DDR = random.randint(0, 10)
+    #     self.BR = random.uniform(30, 100)
+    #     self.RRS = random.uniform(0, 10)
+    #     self.CRS = random.uniform(0, 10)
+    #     self.MRS = random.uniform(0, 10)
+    #     self.ARS = random.uniform(0, 100)
+    #     self.ACS = random.uniform(0, 100)
+    #     self.AMS = random.uniform(0, 100)
+    #     self.MDR = random.uniform(0, 100)
+    #     self.PN = random.uniform(0, 10)
+class Determining_Surrogate:
+    def __init__(self, DDR,BR, RRS, CRS, MRS, FirstVNF_RAM, FirstVNF_CPU,
+                 FirstVNF_Mem, FirstVNF_RAM_Server, FirstVNF_CPU_Server, FirstVNF_Mem_Server,
+                 ARS, ACS, AMS, MDR, PN):
+        self.DDR = DDR
+        self.BR = BR
+        self.RRS = RRS
+        self.CRS = CRS
+        self.MRS = MRS
+        self.FirstVNF_RAM = FirstVNF_RAM
+        self.FirstVNF_CPU = FirstVNF_CPU
+        self.FirstVNF_Mem = FirstVNF_Mem
+        self.FirstVNF_RAM_Server = FirstVNF_RAM_Server
+        self.FirstVNF_CPU_Server = FirstVNF_CPU_Server
+        self.FirstVNF_Mem_Server = FirstVNF_Mem_Server
+        self.ARS = ARS
+        self.ACS = ACS
+        self.AMS = AMS
+        self.MDR = MDR
+        self.PN = PN
     
-    def __repr__(self) -> str:
-        return f"DDR: {self.DDR}, BR: {self.BR}, RRS: {self.RRS}, CRS: {self.CRS}, MRS: {self.MRS}, ARS: {self.ARS}, ACS: {self.ACS}, AMS: {self.AMS}, MDR: {self.MDR}, PN: {self.PN}"
+    # def gen_random(self):
+    #     self.DDR = random.randint(0, 10)
+    #     self.BR = random.uniform(30, 100)
+    #     self.RRS = random.uniform(0, 10)
+    #     self.CRS = random.uniform(0, 10)
+    #     self.MRS = random.uniform(0, 10)
+    #     self.ARS = random.uniform(0, 100)
+    #     self.ACS = random.uniform(0, 100)
+    #     self.AMS = random.uniform(0, 100)
+    #     self.MDR = random.uniform(0, 100)
+    #     self.PN = random.uniform(0, 10)
 
 class Server_Surrogate:
     def __init__(self, RCSe, RRSe, RMSe, MLU, CS, DS, MUC, MUR, MUM):
@@ -58,16 +95,16 @@ class Server_Surrogate:
         self.MUR = MUR
         self.MUM = MUM
     
-    def gen_random(self):
-        self.RCSe = random.uniform(0, 100)
-        self.RRSe = random.uniform(0, 100)
-        self.RMSe = random.uniform(0, 100)
-        self.MLU = random.uniform(0, 1)
-        self.CS = random.uniform(0, 1)
-        self.DS = random.uniform(0, 10)
-        self.MUC = random.uniform(0, 1)/3
-        self.MUR = random.uniform(0, 1)/3
-        self.MUM = random.uniform(0, 1)/3
+    # def gen_random(self):
+    #     self.RCSe = random.uniform(0, 100)
+    #     self.RRSe = random.uniform(0, 100)
+    #     self.RMSe = random.uniform(0, 100)
+    #     self.MLU = random.uniform(0, 1)
+    #     self.CS = random.uniform(0, 1)
+    #     self.DS = random.uniform(0, 10)
+    #     self.MUC = random.uniform(0, 1)/3
+    #     self.MUR = random.uniform(0, 1)/3
+    #     self.MUM = random.uniform(0, 1)/3
 class Ref_Rule:
     def __init__(self, determining_rule, ordering_rule, choosing_rule):
         self.determinig_rule = determining_rule
@@ -81,6 +118,7 @@ class Surrogate:
         self.ref_rule = ref_rule
         self.ordered_situations = None
         self.server_situations = None
+        self.determining_situations = None
 
     
     def gen_situations_random(self, L_requests_num, U_requests_num, L_servers_num, U_servers_num):
@@ -104,6 +142,9 @@ class Surrogate:
             self.server_situations.append(server_list)
 
     def cal_pc(self, individual: Individual):
+        # for situation in self.determining_situations:
+        #     print(individual.determining_tree.GetSurrogateOutput(situation))
+        determining_pc = [ 0 if individual.determining_tree.GetSurrogateOutput(situation) <= 0 else 1 for situation in self.determining_situations]
         ordering_pc = []
         choosing_pc = []
         for i in range(self.number_situations):
@@ -121,4 +162,4 @@ class Surrogate:
             # print(ordering_rank, choosing_rank)
             ordering_pc.append(ordering_rank[ordering_index])
             choosing_pc.append(choosing_rank[choosing_index])
-        return ordering_pc + choosing_pc
+        return determining_pc + ordering_pc + choosing_pc

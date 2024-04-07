@@ -24,7 +24,6 @@ def run_NSGAII( data_path, processing_num, indi_list, num_train,
     network = Network()
     network.add_node_to_network(node_list)
     network.add_link_to_network(link_node)
-
     get_max_cost_vnf(network.MDC_nodes, vnf_list)
         
     request_train = []

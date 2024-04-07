@@ -4,7 +4,8 @@ from data_info.read_data import *
 from priority_gp.decision_var import Decision, Choosing
 from network.network import Network
 from utils.utils import *
-from .gen_pc import Server_Surrogate, Request_Surrogate, Ref_Rule, Surrogate
+from .gen_pc import Determining_Surrogate,Server_Surrogate, Request_Surrogate, Ref_Rule, Surrogate
+import random
 # deploy a request
 def deploy(network: Network, request: Request, indi : Individual, vnf_list):
     server_surrogate_list = []
@@ -51,16 +52,17 @@ def deploy(network: Network, request: Request, indi : Individual, vnf_list):
                 T3 = int(T)
                 T4 = int(T) + n
                 # T3, T4 = get_time_slot(T, path_delay)     #Duration of using link
-                X = Choosing(server_node, T1, T2, path, path_delay, T3, T4, vnf_list[VNF], network_copy.links)
+                X = Choosing(server_node, T1, T2, path, path_delay, T3, T4, vnf_list[VNF], network_copy.links, request.lifetime)
                 value_of_gp = indi.choosing_tree.GetOutput(X)
-                se_surrogate = Server_Surrogate(X.server_state["cpu"], X.server_state["ram"], X.server_state["mem"], 
-                                                X.MLU, X.cost, X.delay, 1-X.MRU["cpu"], 1-X.MRU["ram"], 1-X.MRU["mem"])
+                se_surrogate = Server_Surrogate(X.server_state["cpu"]/X.cpu_capacity, X.server_state["ram"]/X.ram_capacity, X.server_state["mem"]/X.mem_capacity, 
+                                                X.MLU, X.cost, X.delay/X.request_lifetime, 1-X.MRU["cpu"], 1-X.MRU["ram"], 1-X.MRU["mem"])
                 surrogate_VNF.append(se_surrogate)
                 cost = server_node.get_cost(vnf_list[VNF])
                 server_chosing.append((server, value_of_gp, path, time_to_server + finished_server, cost, T1, T2, T3, T4))
         server_chosing_sorted = sorted(server_chosing, key = lambda x: x[1], reverse = True)
         
-        server_surrogate_list.append(surrogate_VNF)
+        if len(surrogate_VNF) > 0:
+            server_surrogate_list.append(surrogate_VNF)
         if len(server_chosing_sorted) == 0 or server_chosing_sorted[0][1] == -np.inf:
             #print("Khong tim duoc server")
             return False, False, False
@@ -98,6 +100,40 @@ def deploy(network: Network, request: Request, indi : Individual, vnf_list):
      
     return update_deploy, request_cost, server_surrogate_list
 
+def determining_gp(indi: Individual, request: Request, T, network, vnf_list):
+    server_list = network.MDC_nodes
+    vnf_resource = VNFs_resource_max(server_list, vnf_list, T)
+    max_delay = max_delay_vnf(server_list, vnf_list)
+    X = Decision(request, T, vnf_resource, max_delay, vnf_list)
+
+
+    ARS_value = 0
+    for vnf in X.r.VNFs:
+        ARS_value += X.VNFs_resource[vnf]["ram"]
+    ARS_value = ARS_value/len(X.r.VNFs)
+
+
+    ACS_value = 0
+    for vnf in X.r.VNFs:
+        ACS_value += X.VNFs_resource[vnf]["cpu"]
+    ACS_value = ACS_value/len(X.r.VNFs)
+
+    AMS_value = 0
+    for vnf in X.r.VNFs:
+        AMS_value += X.VNFs_resource[vnf]["mem"]
+    AMS_value = AMS_value/len(X.r.VNFs)
+
+    MDR_value = 0
+    for vnf in X.r.VNFs:
+        MDR_value += X.VNF_max_delay[vnf]
+    MDR_value = MDR_value/X.r.lifetime
+    request_surrogate = Determining_Surrogate((X.r.lifetime - X.T)/X.r.lifetime, X.r.bw, X.VNFs_request_resource["ram"], X.VNFs_request_resource["cpu"],
+                                              X.VNFs_request_resource["mem"], X.first_VNF_requirement["ram"], X.first_VNF_requirement["cpu"], X.first_VNF_requirement["mem"],
+                                              X.VNFs_resource[X.r.VNFs[0]]["ram"], X.VNFs_resource[X.r.VNFs[0]]["cpu"], X.VNFs_resource[X.r.VNFs[0]]["mem"],
+                                              ARS_value, ACS_value, AMS_value, MDR_value, X.r.push_number/X.r.lifetime)
+    result  = indi.determining_tree.GetOutput(X)
+    return result, request_surrogate
+
 def ordering_gp(indi: Individual, request: Request, T, network, vnf_list):
     server_list = network.MDC_nodes
     vnf_resource = VNFs_resource_max(server_list, vnf_list, T)
@@ -124,24 +160,19 @@ def ordering_gp(indi: Individual, request: Request, T, network, vnf_list):
     MDR_value = 0
     for vnf in X.r.VNFs:
         MDR_value += X.VNF_max_delay[vnf]
-    request_surrogate = Request_Surrogate(X.r.lifetime - X.T, X.r.bw, X.VNFs_request_resource["ram"], X.VNFs_request_resource["cpu"], 
-                                          X.VNFs_request_resource["mem"], ARS_value, ACS_value, AMS_value, 
-                                          MDR_value, X.r.push_number)
+    MDR_value = MDR_value/X.r.lifetime
+    request_surrogate = Determining_Surrogate((X.r.lifetime - X.T)/X.r.lifetime, X.r.bw, X.VNFs_request_resource["ram"], X.VNFs_request_resource["cpu"],
+                                              X.VNFs_request_resource["mem"], X.first_VNF_requirement["ram"], X.first_VNF_requirement["cpu"], X.first_VNF_requirement["mem"],
+                                              X.VNFs_resource[X.r.VNFs[0]]["ram"], X.VNFs_resource[X.r.VNFs[0]]["cpu"], X.VNFs_resource[X.r.VNFs[0]]["mem"],
+                                              ARS_value, ACS_value, AMS_value, MDR_value, X.r.push_number/X.r.lifetime)
     result  = indi.determining_tree.GetOutput(X)
     return result, request_surrogate
-
-def determining_gp(indi: Individual, request: Request, T, network, vnf_list):
-    server_list = network.MDC_nodes
-    vnf_resource = VNFs_resource_max(server_list, vnf_list, T)
-    max_delay = max_delay_vnf(server_list, vnf_list)
-    X = Decision(request, T, vnf_resource, max_delay, vnf_list)
-    result  = indi.determining_tree.GetOutput(X)
-    return result
 
 def store_event(indi: Individual, network, request_list, vnf_list):
     # storing processing history
     request_surrogate = []
     server_surrogate = []
+    determining_surrogate = []
 
     network_copy = deepcopy(network)
     request_list_copy = deepcopy(request_list)
@@ -164,7 +195,8 @@ def store_event(indi: Individual, network, request_list, vnf_list):
         # Calculate value of GP for each request
         request_surrogate_item = []
         for request in request_processing:
-            value_of_determining_gp = determining_gp(indi, request, T, network_copy, vnf_list)
+            value_of_determining_gp, det_sur_item = determining_gp(indi, request, T, network_copy, vnf_list)
+            determining_surrogate.append(det_sur_item)
             if value_of_determining_gp < 0:
                 reject = reject + 1
                 continue
@@ -192,8 +224,9 @@ def store_event(indi: Individual, network, request_list, vnf_list):
                         update_link_state(network_copy.links, update_item[4], update_item[5], update_item[6], update_item[7])
        
         T = T + 1
-        request_surrogate.append(request_surrogate_item)
-    return request_surrogate, server_surrogate
+        if len(request_surrogate_item) > 0:
+            request_surrogate.append(request_surrogate_item)
+    return determining_surrogate, request_surrogate, server_surrogate
 
 def gen_surrogate(data_path, num_train, num_surrogate, ref_rule: Ref_Rule):
     indi = Individual(ref_rule.determinig_rule, ref_rule.ordering_rule, ref_rule.choosing_rule)
@@ -217,22 +250,25 @@ def gen_surrogate(data_path, num_train, num_surrogate, ref_rule: Ref_Rule):
         else: 
             request_test.append(request)
     
-    request_surrogate, server_surrogate = store_event(indi, network, request_train, vnf_list)
+    determing_surrogate, request_surrogate, server_surrogate = store_event(indi, network, request_train, vnf_list)
 
     print(len(request_surrogate))
     print(len(server_surrogate))
+    print(len(determing_surrogate))
     surrogate = Surrogate(num_surrogate, ref_rule)
 
+    surrogate.determining_situations = []
     surrogate.ordered_situations = []
     surrogate.server_situations = []
     index_list = np.random.choice(len(request_surrogate), num_surrogate, replace = False)
-    # for index in index_list:
-    #     surrogate.ordered_situations.append(request_surrogate[index])
-    # index_list = np.random.choice(len(server_surrogate), num_surrogate, replace = False)
-    # for index in index_list:
-    #     surrogate.server_situations.append(server_surrogate[index])
-    request_surrogate.sort(key = lambda x: len(x), reverse= True)
-    server_surrogate.sort(key = lambda x: len(x), reverse= True)
-    surrogate.ordered_situations = request_surrogate[:num_surrogate]
-    surrogate.server_situations = server_surrogate[:num_surrogate]
+    for index in index_list:
+        surrogate.ordered_situations.append(request_surrogate[index])
+    index_list = np.random.choice(len(server_surrogate), num_surrogate, replace = False)
+    for index in index_list:
+        surrogate.server_situations.append(server_surrogate[index])
+    # request_surrogate.sort(key = lambda x: len(x), reverse= True)
+    # server_surrogate.sort(key = lambda x: len(x), reverse= True)
+    surrogate.determining_situations = random.sample(determing_surrogate, num_surrogate)
+    # surrogate.ordered_situations = request_surrogate[:num_surrogate]
+    # surrogate.server_situations = server_surrogate[:num_surrogate]
     return surrogate

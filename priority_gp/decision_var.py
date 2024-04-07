@@ -21,13 +21,24 @@ class Decision:
             "ram": ram,
             "mem": mem
         }
+        self.first_VNF_requirement = {}
+        for vnf in vnf_list:
+            if vnf.name == self.r.VNFs[0]:
+                self.first_VNF_requirement = {
+                    "cpu": vnf.c_f,
+                    "ram": vnf.r_f,
+                    "mem": vnf.h_f
+                }
 
 class Choosing:
     #T1, T2 in server
     #T3, T4 in link
-     def __init__(self, server, T1, T2, path, path_delay, T3, T4, VNF, link_list ):
+     def __init__(self, server, T1, T2, path, path_delay, T3, T4, VNF, link_list, request_lifetime ):
         #print("Khoi tao bien chosing")
         self.server_state = server.get_state_server(T1,T2)
+        self.cpu_capacity = server.cap["cpu_cap"]
+        self.mem_capacity = server.cap["memory_cap"]
+        self.ram_capacity = server.cap["ram_cap"]
         temp = np.inf
         for i in range (len(path)-1):
             link = link_search(link_list, path[i], path[i+1])
@@ -39,6 +50,7 @@ class Choosing:
             self.MLU = 1- temp/(len(path)-1)
         if self.MLU == 0:
             self.MLU = 0
-        self.cost = server.get_cost(VNF)
+        self.cost = server.get_cost(VNF)/VNF.max_cost
         self.delay = path_delay + VNF.d_f[server.name] + server.delay
         self.MRU = server.get_MRU(T1,T2)
+        self.request_lifetime = request_lifetime

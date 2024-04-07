@@ -1,7 +1,6 @@
 from .baseline import Node
 import numpy as np
-class AddNode(Node):
-	
+class AddNode(Node):	
 	def __init__(self):
 		super(AddNode,self).__init__()
 		self.arity = 2
@@ -10,7 +9,7 @@ class AddNode(Node):
 		return '+'
 
 	def getSymbol(self):
-		return 1
+		return "AddNode"
 
 	def _GetHumanExpressionSpecificNode( self, args ):
 		return '( ' + args[0] + ' + ' + args[1] + ' )'
@@ -34,7 +33,7 @@ class SubNode(Node):
 		return '-'
 
 	def getSymbol(self):
-		return 2
+		return "SubNode"
 
 	def _GetHumanExpressionSpecificNode( self, args ):
 		return '( ' + args[0] + ' - ' + args[1] + ' )'
@@ -58,7 +57,7 @@ class MulNode(Node):
 		return '*'
 
 	def getSymbol(self):
-		return 3
+		return "MulNode"
 
 	def _GetHumanExpressionSpecificNode( self, args ):
 		return '( ' + args[0] + ' * ' + args[1] + ' )'
@@ -82,7 +81,7 @@ class DivNode(Node):
 		return '/'
 
 	def getSymbol(self):
-		return 4
+		return "DivNode"
 	def _GetHumanExpressionSpecificNode( self, args ):
 		return '( ' + args[0] + ' / ' + args[1] + ' )'
 
@@ -109,7 +108,7 @@ class MaxNode(Node):
         return 'Max'
     
     def getSymbol(self):
-        return 5
+        return "MaxNode"
     
     def _GetHumanExpressionSpecificNode( self, args ):
         return 'Max( ' + args[0] + ',' + args[1] + ' )'
@@ -134,7 +133,7 @@ class MinNode(Node):
     def __repr__(self):
         return 'Min'
     def getSymbol(self):
-        return 6
+        return "MinNode"
 
     def _GetHumanExpressionSpecificNode( self, args ):
         return 'Min( ' + args[0] + ' ,' + args[1] + ' )'

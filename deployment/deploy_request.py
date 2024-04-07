@@ -49,7 +49,7 @@ def deploy(network: Network, request: Request, indi : Individual, vnf_list):
             else:
                 T3 = int(T)
                 T4 = int(T) + n
-                X = Choosing(server_node, T1, T2, path, path_delay, T3, T4, vnf_list[VNF], network_copy.links)
+                X = Choosing(server_node, T1, T2, path, path_delay, T3, T4, vnf_list[VNF], network_copy.links, request.lifetime)
                 value_of_gp = indi.choosing_tree.GetOutput(X)
 
                 cost = server_node.get_cost(vnf_list[VNF])
