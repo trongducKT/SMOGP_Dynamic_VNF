@@ -9,6 +9,7 @@ import random
 from utils.selection import fast_nondominated_sort
 from utils.initialization import individual_init
 from utils.utils import *
+import time
 
 def distance(p1: Individual, p2: Individual):
     return np.linalg.norm(p1.objectives - p2.objectives)
@@ -115,12 +116,12 @@ def trainSPEA(processing_number, indi_list,  network, vnf_list, request_list,
                 pop_size, max_gen,  min_height, max_height, initialization_max_height,  
                 num_of_tour_particips, tournament_prob,crossover_rate, mutation_rate,
                 crossover_operator_list, mutation_operator_list, calFitness, determining_tree,
-                max_NFE):
+                max_time):
 
-    used_NFE = 0
-    NFE_generations = {}
+    time_objective = {}
     Pareto_front_generations = []
     hv = []
+    time_start = time.time()
     pop = SPEAPopulation(pop_size, functions, terminal_determining, terminal_ordering, terminal_choosing, 
                         min_height, max_height, initialization_max_height, 
                         num_of_tour_particips, tournament_prob, crossover_rate, mutation_rate,
@@ -140,17 +141,14 @@ def trainSPEA(processing_number, indi_list,  network, vnf_list, request_list,
     pop.natural_selection()   
     Pareto_front_generations.append([indi for indi in pop.indivs if indi.rank == 0]) 
     hv.append(cal_hv_front(Pareto_front_generations[-1], np.array([1, 1])))
-    used_NFE += pop.pop_size
-    NFE_generations[0] = {"NFE": used_NFE, "HV": hv[-1]}
+    time_objective[0] = {"time": time.time() - time_start, "HV": hv[-1]}
     print("The he 0: ", hv[-1])
 
     for i in range(max_gen):
-        if used_NFE >= max_NFE:
+        if time.time() - time_start >= max_time:
             pool.close()
             break
         offspring = pop.gen_offspring(crossover_operator_list, mutation_operator_list)
-        number_indi = min(max_NFE - used_NFE, len(offspring))
-        offspring = offspring[:number_indi]
         arg = []
         for indi in offspring:
             arg.append((indi, network, request_list, vnf_list))
@@ -164,16 +162,11 @@ def trainSPEA(processing_number, indi_list,  network, vnf_list, request_list,
 
         Pareto_front_generations.append([indi for indi in pop.indivs if indi.rank == 0])  
         hv.append(cal_hv_front(Pareto_front_generations[-1], np.array([1, 1])))
-        used_NFE += len(offspring)
-        NFE_generations[i + 1] = {"NFE": used_NFE, "HV": hv[-1]}
+        time_objective[i + 1] = {"time": time.time() - time_start, "HV": hv[-1]}
         print("The he ", i+1, ": ", hv[-1])
-
-        if len(hv) > 10:
-            if hv[-1] - hv[-10] < 0.001:
-                pool.close()
-                break        
+     
     pool.close()
-    return Pareto_front_generations, NFE_generations
+    return Pareto_front_generations, time_objective
 
 
 # Pareto front across generations (list of Individuals)
