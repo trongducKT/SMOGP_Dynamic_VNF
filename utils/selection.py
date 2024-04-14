@@ -24,6 +24,34 @@ def fast_nondominated_sort(pop):
         i = i + 1
         pop.ParetoFront.append(temp)
 
+        
+def fast_nondominated_sort_crowding_distance(indi_list):
+    ParetoFront = [[]]
+    for individual in indi_list:
+        individual.domination_count = 0
+        individual.dominated_solutions = []
+        for other_individual in indi_list:
+            if individual.dominates(other_individual):
+                individual.dominated_solutions.append(other_individual)
+            elif other_individual.dominates(individual):
+                individual.domination_count += 1
+        if individual.domination_count == 0:
+            individual.rank = 0
+            ParetoFront[0].append(individual)
+    i = 0
+    while len(ParetoFront[i]) > 0:
+        temp = []
+        for individual in ParetoFront[i]:
+            for other_individual in individual.dominated_solutions:
+                other_individual.domination_count -= 1
+                if other_individual.domination_count == 0:
+                    other_individual.rank = i + 1
+                    temp.append(other_individual)
+        i = i + 1
+        ParetoFront.append(temp)
+    for front in ParetoFront:
+        calculate_crowding_distance(front)
+    return ParetoFront
 
 def calculate_crowding_distance(front):
     if len(front) > 0:

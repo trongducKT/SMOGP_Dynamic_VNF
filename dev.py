@@ -16,8 +16,8 @@ if __name__ == '__main__':
     multiprocessing.freeze_support()
     num_pro = 10
     num_train = 10
-    pop_size = 4
-    max_gen = 2
+    pop_size = 30
+    max_gen = 20
     min_height = 2
     max_height = 8
     initialization_max_height = 4
@@ -31,9 +31,7 @@ if __name__ == '__main__':
     mutation_operator_list = [mutation_individual_branch_replace, mutation_individual_node_replace, mutation_individual_branch_swap, mutation_value_determining]
     neighborhood_size = 3
     max_NFE = 500
-    data_set = [r'data_1_9/nsf_centers_easy_s3.json', r'data_1_9/conus_centers_easy_s3.json', r'data_1_9/conus_centers_normal_s3.json', r'data_1_9/conus_centers_hard_s3.json', 
-                r'data_1_9/conus_rural_easy_s3.json', r'data_1_9/conus_rural_normal_s3.json', r'data_1_9/conus_rural_hard_s3.json',
-                r'data_1_9/conus_uniform_easy_s3.json', r'data_1_9/conus_uniform_normal_s3.json', r'data_1_9/conus_uniform_hard_s3.json',
+    data_set = [r'data_1_9/nsf_uniform_easy_s3.json', r'data_1_9/nsf_uniform_normal_s3.json', r'data_1_9/nsf_uniform_hard_s3.json',
                 r'data_1_9/conus_urban_easy_s3.json', r'data_1_9/conus_urban_normal_s3.json', r'data_1_9/conus_urban_hard_s3.json',]
     for data_path in data_set:
         data = Read_data(data_path)

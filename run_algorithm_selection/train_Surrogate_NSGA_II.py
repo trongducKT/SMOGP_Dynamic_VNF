@@ -81,7 +81,6 @@ class SurrogateNSGAPopulation(Population):
                     children1, children2 = crossover_operator(indi1, indi2, self.min_height, self.max_height, self.determining_tree)
                     for children in [children1, children2]:
                         pc_indi = self.situation_surrogate.cal_pc(children)
-                        print(pc_indi)
                         pc_indi_tuple = tuple(pc_indi)
                         if pc_indi_tuple not in pc_check:
                             children.pc = pc_indi
@@ -97,7 +96,6 @@ class SurrogateNSGAPopulation(Population):
                                                 self.min_height, self.max_height, self.determining_tree)
                     for mutant in [mutant1, mutant2]:
                         pc_indi = self.situation_surrogate.cal_pc(mutant)
-                        print(pc_indi)
                         pc_indi_tuple = tuple(pc_indi)
                         if pc_indi_tuple not in pc_check:
                             mutant.pc = pc_indi
@@ -110,20 +108,28 @@ class SurrogateNSGAPopulation(Population):
                 pc_indi_tuple = tuple(pc_indi)
                 if pc_indi_tuple not in pc_check:
                     indi.pc = pc_indi
-                    print(pc_indi)
                     pc_check.add(pc_indi_tuple)
                     offspring.append(indi)
         return offspring
     
 
     def select_offspring(self, offspring):
-        x_train = [indi.pc for indi in self.indivs]
-        y_train = [[indi.rank, indi.rank_crowding_distance] for indi in self.indivs]
+        # x_train = np.array([indi.pc for indi in self.indivs])
+        # y_train = np.array([[indi.rank, indi.rank_crowding_distance] for indi in self.indivs])
+        x_train = []
+        y_train = []
         objective_check = set()
         for indi in self.indivs:
+            if indi.objectives[0] == 1:
+                continue
+            # if tuple(indi.objectives) not in objective_check:
+            #     x_train.append(indi.pc)
+            #     y_train.append([indi.rank, indi.rank_crowding_distance])
+            #     objective_check.add(tuple(indi.objectives))
+
             if tuple(indi.objectives) not in objective_check:
                 x_train.append(indi.pc)
-                y_train.append([indi.rank, indi.rank_crowding_distance])
+                y_train.append([indi.objectives[0], indi.objectives[1]])
                 objective_check.add(tuple(indi.objectives))
         x_train = np.array(x_train)
         y_train = np.array(y_train)
@@ -131,7 +137,7 @@ class SurrogateNSGAPopulation(Population):
             x_new = np.array([indi.pc])
             indi.rank, indi.rank_crowding_distance = knn_predict_mean(x_train, y_train, x_new, self.neighbor_num)
         offspring.sort(key=lambda x: (x.rank, x.rank_crowding_distance))
-        return offspring[:int(self.pop_size)], offspring[int(self.pop_size):]
+        return offspring[:int(self.pop_size/2)], offspring[int(self.pop_size/2):]
     
 
     def select_offspring_objectives_predict(self, offspring):
@@ -142,13 +148,15 @@ class SurrogateNSGAPopulation(Population):
             indi.objectives_predict[0], indi.objectives_predict[1] = knn_predict_mean(x_train, y_train, x_new, self.neighbor_num)
             indi.objectives[0] = indi.objectives_predict[0]
             indi.objectives[1] = indi.objectives_predict[1]
-        parents = deepcopy(self.indivs)
-        indi_selected = self.natural_selection(offspring)
+        Paretor = fast_nondominated_sort_crowding_distance(offspring)
         offspring = []
-        for indi in indi_selected:
-            if indi.extractly_evaluated == False:
-                offspring.append(deepcopy(indi))
-        self.indivs = parents
+        for front in Paretor:
+            if len(offspring) + len(front) <= self.pop_size:
+                offspring.extend(front)
+            else:
+                front.sort(key=lambda x: -x.crowding_distance)
+                offspring.extend(front[:self.pop_size - len(offspring)])
+                break
         return offspring
 
 
@@ -162,11 +170,11 @@ class SurrogateNSGAPopulation(Population):
     def remove_achive(self, offspring_achive):
         if len(offspring_achive) > self.pop_size:
             offspring_achive.sort(key = lambda x: x.age)
-            return offspring_achive[:self.pop_size]
+            return offspring_achive[:int(5*self.pop_size)]
         return offspring_achive  
 
 
-def trainSurrogateNSGAII_time(processing_number, indi_list,  network, vnf_list, request_list,
+def trainSurrogateNSGAII(processing_number, indi_list,  network, vnf_list, request_list,
                          functions, terminal_determining, terminal_ordering, terminal_choosing, 
                          pop_size, max_gen,  min_height, max_height, initialization_max_height,  
                         num_of_tour_particips, tournament_prob,crossover_rate, mutation_rate,
@@ -178,6 +186,7 @@ def trainSurrogateNSGAII_time(processing_number, indi_list,  network, vnf_list, 
     time_objective = {}
     Pareto_front_generations = []
     hv = []
+    surrogate_objectives = {}
     time_start = time.time()
     pop = SurrogateNSGAPopulation(pop_size, 
                                     functions, terminal_determining, terminal_ordering, terminal_choosing, 
@@ -195,8 +204,7 @@ def trainSurrogateNSGAII_time(processing_number, indi_list,  network, vnf_list, 
     for indi, value in zip(pop.indivs, result):
         indi.objectives[0],indi.objectives[1], indi.reject, indi.cost = value
         indi.extractly_evaluated = True
-    # pop.update_train_data(pop.indivs)
-    print(pop.y_train)
+    pop.update_train_data(pop.indivs)
     print("Hoan thanh khoi tao")
     pop.natural_selection([])
     Pareto_front_generations.append([indi for indi in pop.indivs if indi.rank == 0]) 
@@ -210,24 +218,33 @@ def trainSurrogateNSGAII_time(processing_number, indi_list,  network, vnf_list, 
             pool.close()
             break
         offspring = pop.gen_offspring(crossover_operator_list, mutation_operator_list)
-        Surrogate
-        for indi in offspring_achive:
-            indi.age = indi.age + 1
-        offspring_achive = offspring_achive + offspring
-        offspring_evaluation, offspring_no_evaluation = pop.select_offspring(offspring_achive)
-        offspring_achive = pop.remove_achive(offspring_no_evaluation)
-        # offspring_evaluation = pop.select_offspring_objectives_predict(offspring)
-        # number_indi = min(max_NFE - used_NFE, len(offspring_evaluation))
-        # offspring_evaluation = offspring_evaluation[:number_indi]
-        print(len(offspring_evaluation))
+        # Surrogate
+        # for indi in offspring_achive:
+        #     indi.age = indi.age + 1
+        # offspring_achive = offspring_achive + offspring
+        # offspring_evaluation, offspring_no_evaluation = pop.select_offspring(offspring_achive)
+        # offspring_achive = pop.remove_achive(offspring_no_evaluation)
+        offspring_evaluation = pop.select_offspring_objectives_predict(offspring)
 
         arg = []
         for indi in offspring_evaluation:
             arg.append((indi, network, request_list, vnf_list))
         result = pool.starmap(calFitness, arg)
+        predict_objectives_1 = []
+        extractly_objectvies_1 = []
+        predict_objectives_2 = []
+        extractly_objectvies_2 = []
         for indi, value in zip(offspring_evaluation, result):
             indi.objectives[0],indi.objectives[1],  indi.reject, indi.cost = value
             indi.extractly_evaluated = True
+            print(indi.objectives[0], indi.objectives[1])
+            print(indi.objectives_predict[0], indi.objectives_predict[1])
+            print("________________________")
+            predict_objectives_1.append(indi.objectives_predict[0])
+            extractly_objectvies_1.append(indi.objectives[0])
+            predict_objectives_2.append(indi.objectives_predict[1])
+            extractly_objectvies_2.append(indi.objectives[1])
+        
 
         pop.update_train_data(offspring_evaluation)
         pop.natural_selection(offspring_evaluation)
@@ -236,11 +253,8 @@ def trainSurrogateNSGAII_time(processing_number, indi_list,  network, vnf_list, 
         
         print("The he ", i+ 1, ":", hv[-1])
         time_objective[i + 1] = {"time": time.time() - time_start, "HV": hv[-1]}
-
-        if len(hv) > 10:
-            if hv[-1] - hv[-10] < 0.001:
-                pool.close()
-                break 
+        surrogate_objectives[i + 1] = {"predict1": predict_objectives_1, "extractly1": extractly_objectvies_1,
+                                       "predict2": predict_objectives_2, "extractly2": extractly_objectvies_2}
         
     pool.close()
-    return Pareto_front_generations, time_objective
+    return Pareto_front_generations, time_objective, surrogate_objectives

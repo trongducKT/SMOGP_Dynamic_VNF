@@ -94,7 +94,7 @@ class MOGPDPopulation(Population):
         self.external_pop = self.external_pop[:self.pop_size]
 
 
-def trainMOGPD_time(processing_number, indi_list,  network, vnf_list, request_list,
+def trainMOGPD(processing_number, indi_list,  network, vnf_list, request_list,
                 functions, terminal_determining,terminal_ordering,  terminal_choosing, 
                 pop_size, max_gen,  min_height, max_height, initialization_max_height,  
                 num_of_tour_particips, tournament_prob,crossover_rate, mutation_rate,

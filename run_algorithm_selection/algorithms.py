@@ -5,16 +5,16 @@ from network.network import Network
 from utils.utils import *
 from .train_NSGA_II import *
 from .train_MOEAD import *
-from .train_Surrogate_NSGA_II import *
+from .train_Surrogate_NSGA_II import trainSurrogateNSGAII
 from .train_SPEA import *
 import time
 
 
-def run_NSGAII_time( data_path, processing_num, indi_list, num_train,  
+def run_NSGAII( data_path, processing_num, indi_list, num_train,  
                 functions, terminal_determining, terminal_ordering, terminal_choosing, 
                 pop_size, max_gen,  min_height, max_height, initialization_max_height,  
                 num_of_tour_particips, tournament_prob,crossover_rate, mutation_rate,
-                crossover_operator_list, mutation_operator_list, calFitness, determining_tree, max_time):
+                crossover_operator_list, mutation_operator_list, calFitness, determining_tree, max_NFE):
     data = Read_data(data_path)
     request_list = data.get_R()
     vnf_list = data.get_F()
@@ -34,11 +34,11 @@ def run_NSGAII_time( data_path, processing_num, indi_list, num_train,
         else: 
             request_test.append(request)
     time_start = time.time()
-    Pareto_front_generations, time_objective = trainNSGAII_time(processing_num, indi_list,  network, vnf_list, request_list,
+    Pareto_front_generations, NFE_generations = trainNSGAII(processing_num, indi_list,  network, vnf_list, request_list,
                     functions, terminal_determining,terminal_ordering,  terminal_choosing, 
                     pop_size, max_gen,  min_height, max_height, initialization_max_height,  
                     num_of_tour_particips, tournament_prob,crossover_rate, mutation_rate,
-                crossover_operator_list, mutation_operator_list, calFitness, determining_tree, max_time)
+                crossover_operator_list, mutation_operator_list, calFitness, determining_tree, max_NFE)
     time_end = time.time()
     # Store the Pareto front and objective Pareto
     objective_json = {}
@@ -80,14 +80,14 @@ def run_NSGAII_time( data_path, processing_num, indi_list, num_train,
     test_objectives_json["test_result"] = test_objectives
     test_objectives_json["time_train"] = time_end - time_start
     pool.close()
-    return objective_json, tree_json, test_objectives_json, time_objective
+    return objective_json, tree_json, test_objectives_json, NFE_generations
 
-def run_MOEAD_time( data_path, processing_num, indi_list, num_train,  
+def run_MOEAD( data_path, processing_num, indi_list, num_train,  
                 functions, terminal_determining, terminal_ordering, terminal_choosing, 
                 pop_size, max_gen,  min_height, max_height, initialization_max_height,  
                 num_of_tour_particips, tournament_prob,crossover_rate, mutation_rate,
                 crossover_operator_list, mutation_operator_list, calFitness, determining_tree,
-                neighbor_num, max_time):
+                neighbor_num, max_NFE):
     data = Read_data(data_path)
     request_list = data.get_R()
     vnf_list = data.get_F()
@@ -107,12 +107,12 @@ def run_MOEAD_time( data_path, processing_num, indi_list, num_train,
         else: 
             request_test.append(request)
     time_start = time.time()
-    Pareto_front_generations, time_objective = trainMOGPD_time(processing_num, indi_list,  network, vnf_list, request_list,
+    Pareto_front_generations, NFE_generations = trainMOGPD(processing_num, indi_list,  network, vnf_list, request_list,
                     functions, terminal_determining,terminal_ordering,  terminal_choosing, 
                     pop_size, max_gen,  min_height, max_height, initialization_max_height,  
                     num_of_tour_particips, tournament_prob,crossover_rate, mutation_rate,
                 crossover_operator_list, mutation_operator_list, calFitness, determining_tree,
-                neighbor_num, max_time)
+                neighbor_num, max_NFE)
     time_end = time.time()
     # Store the Pareto front and objective Pareto
     objective_json = {}
@@ -154,17 +154,17 @@ def run_MOEAD_time( data_path, processing_num, indi_list, num_train,
     test_objectives_json["test_result"] = test_objectives
     test_objectives_json["time_train"] = time_end - time_start
     pool.close()
-    return objective_json, tree_json, test_objectives_json, time_objective
+    return objective_json, tree_json, test_objectives_json, NFE_generations
 
     
 
 
-def run_SurrogateNSGAII_time(data_path, processing_num,indi_list,  num_train,  
+def run_SurrogateNSGAII(data_path, processing_num,indi_list,  num_train,  
                         functions, terminal_determining, terminal_ordering, terminal_choosing, 
                         pop_size, max_gen,  min_height, max_height, initialization_max_height,  
                         num_of_tour_particips, tournament_prob,crossover_rate, mutation_rate,
                         crossover_operator_list, mutation_operator_list, neighbor_num, 
-                        situation_surrogate, ref_rule, calFitness, determining_tree, max_time):
+                        situation_surrogate, ref_rule, calFitness, determining_tree, max_NFE):
     data = Read_data(data_path)
     request_list = data.get_R()
     vnf_list = data.get_F()
@@ -185,12 +185,12 @@ def run_SurrogateNSGAII_time(data_path, processing_num,indi_list,  num_train,
         else: 
             request_test.append(request)
     time_start = time.time()
-    Pareto_front_generations, time_objective = trainSurrogateNSGAII_time(processing_num, indi_list,  network, vnf_list, request_list,
+    Pareto_front_generations, NFE_generation, surrogate_objective = trainSurrogateNSGAII(processing_num, indi_list,  network, vnf_list, request_list,
                 functions, terminal_determining, terminal_ordering, terminal_choosing, 
                 pop_size, max_gen,  min_height, max_height, initialization_max_height,  
                 num_of_tour_particips, tournament_prob,crossover_rate, mutation_rate,
                 crossover_operator_list, mutation_operator_list, calFitness,
-                situation_surrogate, ref_rule, neighbor_num, determining_tree, max_time)
+                situation_surrogate, ref_rule, neighbor_num, determining_tree, max_NFE)
     time_end = time.time()
     # Store the Pareto front and objective Pareto
     objective_json = {}
@@ -233,14 +233,14 @@ def run_SurrogateNSGAII_time(data_path, processing_num,indi_list,  num_train,
     test_objectives_json["time_train"] = time_end - time_start
     pool.close()
 
-    return objective_json, tree_json, test_objectives_json, time_objective
+    return objective_json, tree_json, test_objectives_json, NFE_generation, surrogate_objective
 
 
-def run_SPEA_time( data_path, processing_num, indi_list, num_train,  
+def run_SPEA( data_path, processing_num, indi_list, num_train,  
                 functions, terminal_determining, terminal_ordering, terminal_choosing, 
                 pop_size, max_gen,  min_height, max_height, initialization_max_height,  
                 num_of_tour_particips, tournament_prob,crossover_rate, mutation_rate,
-                crossover_operator_list, mutation_operator_list, calFitness, determining_tree, max_time):
+                crossover_operator_list, mutation_operator_list, calFitness, determining_tree, max_NFE):
     data = Read_data(data_path)
     request_list = data.get_R()
     vnf_list = data.get_F()
@@ -260,11 +260,11 @@ def run_SPEA_time( data_path, processing_num, indi_list, num_train,
         else: 
             request_test.append(request)
     time_start = time.time()
-    Pareto_front_generations, time_objective = trainSPEA_time(processing_num, indi_list,  network, vnf_list, request_list,
+    Pareto_front_generations, NFE_generation = trainSPEA(processing_num, indi_list,  network, vnf_list, request_list,
                     functions, terminal_determining,terminal_ordering,  terminal_choosing, 
                     pop_size, max_gen,  min_height, max_height, initialization_max_height,  
                     num_of_tour_particips, tournament_prob,crossover_rate, mutation_rate,
-                crossover_operator_list, mutation_operator_list, calFitness, determining_tree, max_time)
+                crossover_operator_list, mutation_operator_list, calFitness, determining_tree, max_NFE)
     time_end = time.time()
     # Store the Pareto front and objective Pareto
     objective_json = {}
@@ -306,4 +306,4 @@ def run_SPEA_time( data_path, processing_num, indi_list, num_train,
     test_objectives_json["test_result"] = test_objectives
     test_objectives_json["time_train"] = time_end - time_start
     pool.close()
-    return objective_json, tree_json, test_objectives_json, time_objective
+    return objective_json, tree_json, test_objectives_json, NFE_generation
