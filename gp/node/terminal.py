@@ -373,7 +373,10 @@ class Const(Node):
     def GetOutput(self, X):
         return self.value
     def GetSurrogateOutput(self, X):
-        return self.value            
+        return self.value 
+
+    def mutate_value(self):
+        self.value = self.value + np.random.normal(0, 0.1)           
 
 ####################################################################
 # Chosing server policy

@@ -226,3 +226,18 @@ def cal_hv_front(indi_list, ref_point):
     for indi in indi_list:
         front.append(indi.objectives)
     return cal_hv(np.array(front), ref_point)
+
+def find_node(root, symbol):
+    if root == None:
+        return None
+    if len(root._children) == 0:
+        return None
+    if root.getSymbol() == symbol:
+        return root
+    left = find_node(root._children[0], symbol)
+    right = find_node(root._children[1], symbol)
+    if left != None:
+        return left
+    if right != None:
+        return right
+    return None

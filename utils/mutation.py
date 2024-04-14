@@ -1,6 +1,7 @@
 import numpy as np
 from .function_operator import *
 from gp.population.individual import Individual
+from utils.utils import *
 
 def mutation_individual_branch_replace(individual: Individual, functions, 
                                        terminal_determining, terminal_ordering, terminal_choosing, 
@@ -81,3 +82,23 @@ def mutation_individual_branch_swap(individual: Individual, functions,
         o3 = deepcopy(individual.choosing_tree)
     # both trees mutation
     return Individual(o1, o2, o3)
+
+
+def mutation_value_determining(individual: Individual, functions,
+                               terminal_determining, terminal_ordering, terminal_choosing,
+                               min_height, max_height, determining_tree):
+    determining_tree = deepcopy(individual.determining_tree)
+    ordering_tree = deepcopy(individual.ordering_tree)
+    choosing_tree = deepcopy(individual.choosing_tree)
+    node = find_node(determining_tree, "Const")
+    if node != None:
+        node.mutate_value()
+
+    node1 = find_node(ordering_tree, "Const")
+    if node1 != None:
+        node1.mutate_value()
+    node2 = find_node(choosing_tree, "Const")
+    if node2 != None:
+        node2.mutate_value()
+    
+    return Individual(determining_tree, ordering_tree, choosing_tree)

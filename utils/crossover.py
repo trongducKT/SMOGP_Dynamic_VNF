@@ -31,3 +31,28 @@ def crossover_branch_individual_swap(individual1, individual2, min_height, max_h
     child1 = __crossover_branch_individual_swap(individual1, individual2, min_height, max_height, determining_tree)
     child2 = __crossover_branch_individual_swap(individual2, individual1, min_height, max_height, determining_tree)
     return child1, child2
+
+def crossover_sub_tree_swap(individual1, individual2, min_height, max_height, determining_tree):
+    if np.random.rand() < 0.5:
+        determining_tree_child1 = deepcopy(individual1.determining_tree)
+        determining_tree_child2 = deepcopy(individual2.determining_tree)
+    else:
+        determining_tree_child1 = deepcopy(individual2.determining_tree)
+        determining_tree_child2 = deepcopy(individual1.determining_tree)
+    
+    if np.random.rand() < 0.5:
+        ordering_tree_child1 = deepcopy(individual1.ordering_tree)
+        ordering_tree_child2 = deepcopy(individual2.ordering_tree)
+    else:
+        ordering_tree_child1 = deepcopy(individual2.ordering_tree)
+        ordering_tree_child2 = deepcopy(individual1.ordering_tree)
+    
+    if np.random.rand() < 0.5:
+        choosing_tree_child1 = deepcopy(individual1.choosing_tree)
+        choosing_tree_child2 = deepcopy(individual2.choosing_tree)
+    else:
+        choosing_tree_child1 = deepcopy(individual2.choosing_tree)
+        choosing_tree_child2 = deepcopy(individual1.choosing_tree)
+    child1 = Individual(determining_tree_child1, ordering_tree_child1, choosing_tree_child1)
+    child2 = Individual(determining_tree_child2, ordering_tree_child2, choosing_tree_child2)
+    return child1, child2
