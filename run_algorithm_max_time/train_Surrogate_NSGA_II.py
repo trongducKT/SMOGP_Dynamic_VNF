@@ -81,7 +81,7 @@ class SurrogateNSGAPopulation(Population):
                     children1, children2 = crossover_operator(indi1, indi2, self.min_height, self.max_height, self.determining_tree)
                     for children in [children1, children2]:
                         pc_indi = self.situation_surrogate.cal_pc(children)
-                        print(pc_indi)
+                        # print(pc_indi)
                         pc_indi_tuple = tuple(pc_indi)
                         if pc_indi_tuple not in pc_check:
                             children.pc = pc_indi
@@ -97,7 +97,7 @@ class SurrogateNSGAPopulation(Population):
                                                 self.min_height, self.max_height, self.determining_tree)
                     for mutant in [mutant1, mutant2]:
                         pc_indi = self.situation_surrogate.cal_pc(mutant)
-                        print(pc_indi)
+                        # print(pc_indi)
                         pc_indi_tuple = tuple(pc_indi)
                         if pc_indi_tuple not in pc_check:
                             mutant.pc = pc_indi
@@ -110,7 +110,7 @@ class SurrogateNSGAPopulation(Population):
                 pc_indi_tuple = tuple(pc_indi)
                 if pc_indi_tuple not in pc_check:
                     indi.pc = pc_indi
-                    print(pc_indi)
+                    # print(pc_indi)
                     pc_check.add(pc_indi_tuple)
                     offspring.append(indi)
         return offspring

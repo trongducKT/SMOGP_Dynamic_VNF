@@ -111,7 +111,7 @@ class SPEAPopulation(Population):
         self.indivs = environmental_selection(self.indivs, self.pop_size)
     def natural_selection(self):
         fast_nondominated_sort(self)
-def trainSPEA(processing_number, indi_list,  network, vnf_list, request_list,
+def trainSPEA_time(processing_number, indi_list,  network, vnf_list, request_list,
                 functions, terminal_determining,terminal_ordering,  terminal_choosing, 
                 pop_size, max_gen,  min_height, max_height, initialization_max_height,  
                 num_of_tour_particips, tournament_prob,crossover_rate, mutation_rate,

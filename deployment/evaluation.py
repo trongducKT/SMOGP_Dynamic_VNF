@@ -130,7 +130,7 @@ def calFitness_removeGPvalue(indi: Individual, network, request_list, vnf_list):
         request_decision = []
         # Calculate value of GP for each request
         for request in request_processing:
-            value_of_gp = determining_gp(indi, request, T, network_copy, vnf_list)
+            value_of_gp = ordering_gp(indi, request, T, network_copy, vnf_list)
             if value_of_gp < 0:
                 reject = reject + 1
                 continue
@@ -158,4 +158,4 @@ def calFitness_removeGPvalue(indi: Individual, network, request_list, vnf_list):
                         update_link_state(network_copy.links, update_item[4], update_item[5], update_item[6], update_item[7])
        
         T = T + 1
-    return reject/sum_request, cost_sum/sum_max_cost, reject, cost_sum, processing_history
+    return reject/sum_request, cost_sum/sum_max_cost, reject, cost_sum

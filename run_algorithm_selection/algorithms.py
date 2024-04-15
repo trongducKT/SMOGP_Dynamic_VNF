@@ -34,7 +34,7 @@ def run_NSGAII( data_path, processing_num, indi_list, num_train,
         else: 
             request_test.append(request)
     time_start = time.time()
-    Pareto_front_generations, NFE_generations = trainNSGAII(processing_num, indi_list,  network, vnf_list, request_list,
+    Pareto_front_generations, NFE_generations = trainNSGAII(processing_num, indi_list,  network, vnf_list, request_train,
                     functions, terminal_determining,terminal_ordering,  terminal_choosing, 
                     pop_size, max_gen,  min_height, max_height, initialization_max_height,  
                     num_of_tour_particips, tournament_prob,crossover_rate, mutation_rate,
@@ -65,7 +65,7 @@ def run_NSGAII( data_path, processing_num, indi_list, num_train,
     pool = multiprocessing.Pool(processes=processing_num)
     arg = []
     for indi in Pareto_front_generations[-1]:
-        arg.append((indi, network, request_list, vnf_list))
+        arg.append((indi, network, request_test, vnf_list))
     result = pool.starmap(calFitness, arg)
     test_objectives = []
     for value in result:
@@ -107,7 +107,7 @@ def run_MOEAD( data_path, processing_num, indi_list, num_train,
         else: 
             request_test.append(request)
     time_start = time.time()
-    Pareto_front_generations, NFE_generations = trainMOGPD(processing_num, indi_list,  network, vnf_list, request_list,
+    Pareto_front_generations, NFE_generations = trainMOGPD(processing_num, indi_list,  network, vnf_list, request_train,
                     functions, terminal_determining,terminal_ordering,  terminal_choosing, 
                     pop_size, max_gen,  min_height, max_height, initialization_max_height,  
                     num_of_tour_particips, tournament_prob,crossover_rate, mutation_rate,
@@ -139,7 +139,7 @@ def run_MOEAD( data_path, processing_num, indi_list, num_train,
     pool = multiprocessing.Pool(processes=processing_num)
     arg = []
     for indi in Pareto_front_generations[-1]:
-        arg.append((indi, network, request_list, vnf_list))
+        arg.append((indi, network, request_test, vnf_list))
     result = pool.starmap(calFitness, arg)
     test_objectives = []
     for value in result:
@@ -185,7 +185,7 @@ def run_SurrogateNSGAII(data_path, processing_num,indi_list,  num_train,
         else: 
             request_test.append(request)
     time_start = time.time()
-    Pareto_front_generations, NFE_generation, surrogate_objective = trainSurrogateNSGAII(processing_num, indi_list,  network, vnf_list, request_list,
+    Pareto_front_generations, NFE_generation, surrogate_objective = trainSurrogateNSGAII(processing_num, indi_list,  network, vnf_list, request_train,
                 functions, terminal_determining, terminal_ordering, terminal_choosing, 
                 pop_size, max_gen,  min_height, max_height, initialization_max_height,  
                 num_of_tour_particips, tournament_prob,crossover_rate, mutation_rate,
@@ -217,7 +217,7 @@ def run_SurrogateNSGAII(data_path, processing_num,indi_list,  num_train,
     pool = multiprocessing.Pool(processes=processing_num)
     arg = []
     for indi in Pareto_front_generations[-1]:
-        arg.append((indi, network, request_list, vnf_list))
+        arg.append((indi, network, request_test, vnf_list))
     result = pool.starmap(calFitness, arg)
     test_objectives = []
     for value in result:
@@ -260,7 +260,7 @@ def run_SPEA( data_path, processing_num, indi_list, num_train,
         else: 
             request_test.append(request)
     time_start = time.time()
-    Pareto_front_generations, NFE_generation = trainSPEA(processing_num, indi_list,  network, vnf_list, request_list,
+    Pareto_front_generations, NFE_generation = trainSPEA(processing_num, indi_list,  network, vnf_list, request_train,
                     functions, terminal_determining,terminal_ordering,  terminal_choosing, 
                     pop_size, max_gen,  min_height, max_height, initialization_max_height,  
                     num_of_tour_particips, tournament_prob,crossover_rate, mutation_rate,
@@ -291,7 +291,7 @@ def run_SPEA( data_path, processing_num, indi_list, num_train,
     pool = multiprocessing.Pool(processes=processing_num)
     arg = []
     for indi in Pareto_front_generations[-1]:
-        arg.append((indi, network, request_list, vnf_list))
+        arg.append((indi, network, request_test, vnf_list))
     result = pool.starmap(calFitness, arg)
     test_objectives = []
     for value in result:
