@@ -3,6 +3,7 @@ import random
 from numpy.random import randint
 from copy import deepcopy
 from .initialization import GenerateRandomTree
+import time
 
 # Tree  branch replace mutation
 def mutation_tree_branch_replace(tree, functions, terminals, min_height, max_height ):
@@ -36,6 +37,8 @@ def mutation_tree_node_replace(tree, functions, terminals, min_height, max_heigh
     nodes = tree.GetSubtree()
     random_node = nodes[randint(len(nodes))]
     p = random_node.parent
+#     print(random_node, p)
+#     time.sleep(2)
     if random_node.getSymbol() in node_identifier:
         temp = functions[randint(len(functions))]
         while temp.getSymbol() == random_node.getSymbol():

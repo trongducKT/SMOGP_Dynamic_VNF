@@ -111,6 +111,7 @@ class SurrogateNSGAPopulation(Population):
                     pc_check.add(pc_indi_tuple)
                     offspring.append(indi)
         return offspring
+
     
 
     def select_offspring(self, offspring):
@@ -139,6 +140,32 @@ class SurrogateNSGAPopulation(Population):
         offspring.sort(key=lambda x: (x.rank, x.rank_crowding_distance))
         return offspring[:int(self.pop_size/2)], offspring[int(self.pop_size/2):]
     
+    def select_offspring_rank(self, offspring):
+#         x_train = np.array([indi.pc for indi in self.indivs])
+#         y_train = np.array([[indi.rank, indi.rank_crowding_distance] for indi in self.indivs])
+        x_train = []
+        y_train = []
+        objective_check = set()
+        for indi in self.indivs:
+            if indi.objectives[0] == 1:
+                continue
+            if tuple(indi.objectives) not in objective_check:
+                x_train.append(indi.pc)
+                y_train.append([indi.rank, indi.rank_crowding_distance])
+                objective_check.add(tuple(indi.objectives))
+
+#             if tuple(indi.objectives) not in objective_check:
+#                 x_train.append(indi.pc)
+#                 y_train.append([indi.objectives[0], indi.objectives[1]])
+#                 objective_check.add(tuple(indi.objectives))
+        x_train = np.array(x_train)
+        y_train = np.array(y_train)
+        for indi in offspring:
+            x_new = np.array([indi.pc])
+            indi.rank, indi.rank_crowding_distance = knn_predict_mean(x_train, y_train, x_new, self.neighbor_num)
+        offspring.sort(key=lambda x: (x.rank, x.rank_crowding_distance))
+        return offspring[:int(self.pop_size)], offspring[int(self.pop_size):]
+    
 
     def select_offspring_objectives_predict(self, offspring):
         x_train = np.array(self.x_train)
@@ -150,22 +177,51 @@ class SurrogateNSGAPopulation(Population):
             indi.objectives[1] = indi.objectives_predict[1]
         Paretor = fast_nondominated_sort_crowding_distance(offspring)
         offspring = []
+        offspring_nonevaluation = []
         for front in Paretor:
-            if len(offspring) + len(front) <= self.pop_size:
+            if len(offspring) > int(2*self.pop_size):
+                offspring_nonevaluation.extend(front)
+            elif len(offspring) + len(front) <= int(2*self.pop_size):
                 offspring.extend(front)
             else:
                 front.sort(key=lambda x: -x.crowding_distance)
-                offspring.extend(front[:self.pop_size - len(offspring)])
-                break
-        return offspring
+                offspring.extend(front[:int(2*self.pop_size) - len(offspring)])
+                offspring_nonevaluation.extend(front[int(2*self.pop_size) - len(offspring):])
+        return offspring, offspring_nonevaluation
+    
+    def select_offspring_objectives_predict_combine(self, offspring):
+        x_train = np.array(self.x_train)
+        y_train = np.array(self.y_train)
+        for indi in offspring:
+            x_new = np.array([indi.pc])
+            indi.objectives_predict[0], indi.objectives_predict[1] = knn_predict_mean(x_train, y_train, x_new, self.neighbor_num)
+            indi.objectives[0] = indi.objectives_predict[0]
+            indi.objectives[1] = indi.objectives_predict[1]
+        parents = deepcopy(self.indivs)
+        offspring = offspring + parents
+        Pareto = fast_nondominated_sort_crowding_distance(offspring)
+        evaluation_indi = []
+        no_evaluation_indi = []
+        for front in Pareto:
+            for indi in front:
+                if len(evaluation_indi) >= 2*self.pop_size:
+                    if indi.extractly_evaluated == False:
+                        no_evaluation_indi.append(indi)
+                elif indi.extractly_evaluated == False:
+                    evaluation_indi.append(indi)
+        return evaluation_indi, no_evaluation_indi
+        
+            
 
 
-    def natural_selection(self, offspring):
-        self.indivs.extend(offspring)
-        self.cal_rank_individual()
-        self.indivs.sort(key=lambda x: (x.rank, x.rank_crowding_distance))
-        self.indivs = self.indivs[:self.pop_size]
-        return self.indivs
+    def natural_selection(self):
+        natural_selection(self)
+    
+#     def natural_selection(self):
+#         self.cal_rank_individual()
+#         self.indivs.sort(key=lambda x: (x.rank, x.rank_crowding_distance))
+#         self.indivs = self.indivs[:self.pop_size]
+#         return self.indivs
 
     def remove_achive(self, offspring_achive):
         if len(offspring_achive) > self.pop_size:
@@ -206,7 +262,7 @@ def trainSurrogateNSGAII(processing_number, indi_list,  network, vnf_list, reque
         indi.extractly_evaluated = True
     pop.update_train_data(pop.indivs)
     print("Hoan thanh khoi tao")
-    pop.natural_selection([])
+    pop.natural_selection()
     Pareto_front_generations.append([indi for indi in pop.indivs if indi.rank == 0]) 
     hv.append(cal_hv_front(Pareto_front_generations[-1], np.array([1, 1])))
     print("The he 0: ", hv[-1])
@@ -218,14 +274,33 @@ def trainSurrogateNSGAII(processing_number, indi_list,  network, vnf_list, reque
             pool.close()
             break
         offspring = pop.gen_offspring(crossover_operator_list, mutation_operator_list)
-        # Surrogate
-        # for indi in offspring_achive:
-        #     indi.age = indi.age + 1
-        # offspring_achive = offspring_achive + offspring
-        # offspring_evaluation, offspring_no_evaluation = pop.select_offspring(offspring_achive)
-        # offspring_achive = pop.remove_achive(offspring_no_evaluation)
-        offspring_evaluation = pop.select_offspring_objectives_predict(offspring)
-
+        print(len(offspring))
+#         print("The number of offspring:", len(offspring))
+#         offspring_estimate = []
+#         offspring_noestimate = []
+#         for indi in offspring:
+#             objective = fitness_estimate(np.array(pop.x_train), np.array(pop.y_train), np.array([indi.pc]))
+#             if objective == None:
+#                 offspring_noestimate.append(indi)
+#             else:
+#                 indi.objectives = objective
+#                 offspring_estimate.append(indi)
+#         print("The number of evaluated offspring: ", len(offspring_noestimate))
+#         Surrogate
+#         for indi in offspring_achive:
+#             indi.age = indi.age + 1
+#         offspring_achive = offspring_achive + offspring
+# #         offspring_achive = offspring_noestimate
+# #         offspring_evaluation, offspring_no_evaluation = pop.select_offspring(offspring_achive)
+# #         offspring_achive = pop.remove_achive(offspring_no_evaluation)
+#         offspring_evaluation, offspring_nonevaluation = pop.select_offspring_objectives_predict(offspring)
+#         offspring_achive = pop.remove_achive(offspring_nonevaluation)
+#         offspring_evaluation = offspring_noestimate
+        
+#         offspring_evaluation, a = pop.select_offspring_objectives_predict_combine(offspring)
+#         offspring_evaluation, a = pop.select_offspring_objectives_predict(offspring)
+        offspring_evaluation = offspring
+#         print("Number of individual evaluations", len(offspring_evaluation))
         arg = []
         for indi in offspring_evaluation:
             arg.append((indi, network, request_list, vnf_list))
@@ -236,18 +311,19 @@ def trainSurrogateNSGAII(processing_number, indi_list,  network, vnf_list, reque
         extractly_objectvies_2 = []
         for indi, value in zip(offspring_evaluation, result):
             indi.objectives[0],indi.objectives[1],  indi.reject, indi.cost = value
-            indi.extractly_evaluated = True
-            print(indi.objectives[0], indi.objectives[1])
-            print(indi.objectives_predict[0], indi.objectives_predict[1])
-            print("________________________")
-            predict_objectives_1.append(indi.objectives_predict[0])
-            extractly_objectvies_1.append(indi.objectives[0])
-            predict_objectives_2.append(indi.objectives_predict[1])
-            extractly_objectvies_2.append(indi.objectives[1])
+#             indi.extractly_evaluated = True
+#             print(indi.objectives[0], indi.objectives[1])
+#             print(indi.objectives_predict[0], indi.objectives_predict[1])
+#             print("________________________")
+#             predict_objectives_1.append(indi.objectives_predict[0])
+#             extractly_objectvies_1.append(indi.objectives[0])
+#             predict_objectives_2.append(indi.objectives_predict[1])
+#             extractly_objectvies_2.append(indi.objectives[1])
         
-
         pop.update_train_data(offspring_evaluation)
-        pop.natural_selection(offspring_evaluation)
+#         offspring_evaluation = offspring_evaluation + offspring_estimate
+        pop.indivs.extend(offspring_evaluation)
+        pop.natural_selection()
         Pareto_front_generations.append([indi for indi in pop.indivs if indi.rank == 0])
         hv.append(cal_hv_front(Pareto_front_generations[-1], np.array([1, 1])))
         

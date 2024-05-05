@@ -83,6 +83,7 @@ def trainNSGAII(processing_number, indi_list,  network, vnf_list, request_list,
             pool.close()
             break
         offspring = pop.gen_offspring(crossover_operator_list, mutation_operator_list)
+        print(len(offspring))
         arg = []
 
         for indi in offspring:

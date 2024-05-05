@@ -16,3 +16,10 @@ def knn_predict_mean(X_train, y_train, x_new, k):
     predicted_objective2 = np.mean(nearest_labels[:,1])
     
     return [predicted_objective1, predicted_objective2]
+
+def fitness_estimate(X_train, y_train, x_new):
+    for i in range(len(X_train)):
+        difference = X_train[i] - x_new
+        if np.count_nonzero(difference) == 0:
+            return y_train[i]
+        return None
