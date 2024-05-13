@@ -68,6 +68,7 @@ def run_NSGAII( data_path, processing_num, indi_list, num_train,
         arg.append((indi, network, request_test, vnf_list))
     result = pool.starmap(calFitness, arg)
     test_objectives = []
+    hv_supported_objectives = []
     for value in result:
         objectives_temp= {}
         normal_reject, normal_cost, reject, cost = value
@@ -76,10 +77,13 @@ def run_NSGAII( data_path, processing_num, indi_list, num_train,
         objectives_temp["reject"] = reject
         objectives_temp["cost"] = cost
         test_objectives.append(objectives_temp)
+        hv_supported_objectives.append([normal_reject, normal_cost])
     test_objectives_json = {}
     test_objectives_json["test_result"] = test_objectives
     test_objectives_json["time_train"] = time_end - time_start
     pool.close()
+    print("Gia tri mục tiêu")
+    print(cal_hv(np.array(hv_supported_objectives), np.array([1, 1])))
     return objective_json, tree_json, test_objectives_json, NFE_generations
 
 def run_MOEAD( data_path, processing_num, indi_list, num_train,  
@@ -220,6 +224,7 @@ def run_SurrogateNSGAII(data_path, processing_num,indi_list,  num_train,
         arg.append((indi, network, request_test, vnf_list))
     result = pool.starmap(calFitness, arg)
     test_objectives = []
+    hv_supported_objectives = []
     for value in result:
         objectives_temp= {}
         normal_reject, normal_cost, reject, cost = value
@@ -228,11 +233,13 @@ def run_SurrogateNSGAII(data_path, processing_num,indi_list,  num_train,
         objectives_temp["reject"] = reject
         objectives_temp["cost"] = cost
         test_objectives.append(objectives_temp)
+        hv_supported_objectives.append([normal_reject, normal_cost])
     test_objectives_json = {}
     test_objectives_json["test_result"] = test_objectives
     test_objectives_json["time_train"] = time_end - time_start
     pool.close()
-
+    print("Giá trị mục tiêu")
+    print(cal_hv(np.array(hv_supported_objectives), np.array([1, 1])))
     return objective_json, tree_json, test_objectives_json, NFE_generation, surrogate_objective
 
 
