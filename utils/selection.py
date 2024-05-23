@@ -80,6 +80,10 @@ def crowding_operator( individual, other_individual):
 
 def natural_selection(pop):
     fast_nondominated_sort(pop)
+#     print("Bước chọn lọc")
+#     print(len(pop.ParetoFront))
+#     for front in pop.ParetoFront:
+#         print(len(front))
     new_indivs = []
     new_fronts = []
     front_num = 0

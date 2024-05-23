@@ -31,6 +31,7 @@ def mutation_tree_branch_replace(tree, functions, terminals, min_height, max_hei
 
 # Tree node replace mutation
 def mutation_tree_node_replace(tree, functions, terminals, min_height, max_height):
+    temp_tree_avoid_conflict = deepcopy(tree)
     node_identifier = set()
     for node in functions:
         node_identifier.add(node.getSymbol())
@@ -61,7 +62,8 @@ def mutation_tree_node_replace(tree, functions, terminals, min_height, max_heigh
         while temp.getSymbol() == random_node.getSymbol():
             temp = terminals[randint(len(terminals))]
         replace_node = deepcopy(temp)
-    
+        if p == None:
+            return temp_tree_avoid_conflict
         idx = p.DetachChild(random_node)
         p.InsertChildAtPosition(idx, replace_node)
     return tree

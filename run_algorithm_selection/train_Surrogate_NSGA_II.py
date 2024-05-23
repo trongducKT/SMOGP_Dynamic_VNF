@@ -9,6 +9,7 @@ from utils.utils import cal_hv_front
 from utils.initialization import *
 from utils.selection import *
 import time
+from sklearn.neighbors import KNeighborsRegressor
 
 class SurrogateNSGAPopulation(Population):
     def __init__(self, pop_size, 
@@ -54,10 +55,10 @@ class SurrogateNSGAPopulation(Population):
     
     def update_train_data(self, indi_list):
         for indi in indi_list:
-            if tuple(indi.objectives) not in self.objective_check:
+#             if tuple(indi.objectives) not in self.objective_check:
                 self.x_train.append(indi.pc)
                 self.y_train.append([indi.objectives[0], indi.objectives[1]])
-                self.objective_check.add(tuple(indi.objectives))
+#                 self.objective_check.add(tuple(indi.objectives))
     
     def cal_rank_individual(self):
         fast_nondominated_sort(self)
@@ -111,90 +112,150 @@ class SurrogateNSGAPopulation(Population):
                     pc_check.add(pc_indi_tuple)
                     offspring.append(indi)
         return offspring
+    
+    def remove_duplicated_objective(self, indi_list):
+        group_list = []
+        for indi in indi_list:
+            in_the_group = False
+            for group in group_list:
+                if group[0].objectives[0] == indi.objectives[0] and group[0].objectives[1] == indi.objectives[1]:
+                    group.append(indi)
+                    in_the_group = True
+                    break
+            if in_the_group == False:
+                group_list.append([indi])
+        selected_indivs = []
+        for group in group_list:
+            best_height = max([group[0].determining_tree.GetHeight(), group[0].ordering_tree.GetHeight(), group[0].choosing_tree.GetHeight()])
+            best_index = 0
+            for i in range(1, len(group)):
+                current_height = max([group[i].determining_tree.GetHeight(), group[i].ordering_tree.GetHeight(), group[i].choosing_tree.GetHeight()])
+                if current_height < best_height:
+                    best_height = current_height
+                    best_index = i
+            selected_indivs.append(group[best_index])
+        return selected_indivs
+        
 
     
 
-    def select_offspring(self, offspring):
-        # x_train = np.array([indi.pc for indi in self.indivs])
-        # y_train = np.array([[indi.rank, indi.rank_crowding_distance] for indi in self.indivs])
-        x_train = []
-        y_train = []
-        objective_check = set()
-        for indi in self.indivs:
-            if indi.objectives[0] == 1:
-                continue
-            # if tuple(indi.objectives) not in objective_check:
-            #     x_train.append(indi.pc)
-            #     y_train.append([indi.rank, indi.rank_crowding_distance])
-            #     objective_check.add(tuple(indi.objectives))
-
-            if tuple(indi.objectives) not in objective_check:
-                x_train.append(indi.pc)
-                y_train.append([indi.objectives[0], indi.objectives[1]])
-                objective_check.add(tuple(indi.objectives))
-        x_train = np.array(x_train)
-        y_train = np.array(y_train)
-        for indi in offspring:
-            x_new = np.array([indi.pc])
-            indi.rank, indi.rank_crowding_distance = knn_predict_mean(x_train, y_train, x_new, self.neighbor_num)
-        offspring.sort(key=lambda x: (x.rank, x.rank_crowding_distance))
-        return offspring[:int(self.pop_size/2)], offspring[int(self.pop_size/2):]
-    
-    def select_offspring_rank(self, offspring):
-#         x_train = np.array([indi.pc for indi in self.indivs])
-#         y_train = np.array([[indi.rank, indi.rank_crowding_distance] for indi in self.indivs])
-        x_train = []
-        y_train = []
-        objective_check = set()
-        for indi in self.indivs:
-            if indi.objectives[0] == 1:
-                continue
-            if tuple(indi.objectives) not in objective_check:
-                x_train.append(indi.pc)
-                y_train.append([indi.rank, indi.rank_crowding_distance])
-                objective_check.add(tuple(indi.objectives))
+#     def select_offspring(self, offspring):
+#         # x_train = np.array([indi.pc for indi in self.indivs])
+#         # y_train = np.array([[indi.rank, indi.rank_crowding_distance] for indi in self.indivs])
+#         x_train = []
+#         y_train = []
+#         objective_check = set()
+#         for indi in self.indivs:
+#             if indi.objectives[0] == 1:
+#                 continue
+#             # if tuple(indi.objectives) not in objective_check:
+#             #     x_train.append(indi.pc)
+#             #     y_train.append([indi.rank, indi.rank_crowding_distance])
+#             #     objective_check.add(tuple(indi.objectives))
 
 #             if tuple(indi.objectives) not in objective_check:
 #                 x_train.append(indi.pc)
 #                 y_train.append([indi.objectives[0], indi.objectives[1]])
 #                 objective_check.add(tuple(indi.objectives))
-        x_train = np.array(x_train)
-        y_train = np.array(y_train)
-        for indi in offspring:
-            x_new = np.array([indi.pc])
-            indi.rank, indi.rank_crowding_distance = knn_predict_mean(x_train, y_train, x_new, self.neighbor_num)
-        offspring.sort(key=lambda x: (x.rank, x.rank_crowding_distance))
-        return offspring[:int(self.pop_size)], offspring[int(self.pop_size):]
+#         x_train = np.array(x_train)
+#         y_train = np.array(y_train)
+#         for indi in offspring:
+#             x_new = np.array([indi.pc])
+#             indi.rank, indi.rank_crowding_distance = knn_predict_mean(x_train, y_train, x_new, self.neighbor_num)
+#         offspring.sort(key=lambda x: (x.rank, x.rank_crowding_distance))
+#         return offspring[:int(self.pop_size/2)], offspring[int(self.pop_size/2):]
+    
+#     def select_offspring_rank(self, offspring):
+# #         x_train = np.array([indi.pc for indi in self.indivs])
+# #         y_train = np.array([[indi.rank, indi.rank_crowding_distance] for indi in self.indivs])
+#         x_train = []
+#         y_train = []
+#         objective_check = set()
+#         for indi in self.indivs:
+#             if indi.objectives[0] == 1:
+#                 continue
+#             if tuple(indi.objectives) not in objective_check:
+#                 x_train.append(indi.pc)
+#                 y_train.append([indi.rank, indi.rank_crowding_distance])
+#                 objective_check.add(tuple(indi.objectives))
+
+# #             if tuple(indi.objectives) not in objective_check:
+# #                 x_train.append(indi.pc)
+# #                 y_train.append([indi.objectives[0], indi.objectives[1]])
+# #                 objective_check.add(tuple(indi.objectives))
+#         x_train = np.array(x_train)
+#         y_train = np.array(y_train)
+#         for indi in offspring:
+#             x_new = np.array([indi.pc])
+#             indi.rank, indi.rank_crowding_distance = knn_predict_mean(x_train, y_train, x_new, self.neighbor_num)
+#         offspring.sort(key=lambda x: (x.rank, x.rank_crowding_distance))
+#         return offspring[:int(self.pop_size)], offspring[int(self.pop_size):]
     
 
     def select_offspring_objectives_predict(self, offspring):
         x_train = np.array(self.x_train)
         y_train = np.array(self.y_train)
+        off_new = []
         for indi in offspring:
-            x_new = np.array([indi.pc])
-            indi.objectives_predict[0], indi.objectives_predict[1] = knn_predict_mean(x_train, y_train, x_new, self.neighbor_num)
+            off_new.append(indi.pc)
+        off_new = np.array(off_new)
+        neigh = KNeighborsRegressor(n_neighbors=self.neighbor_num, n_jobs=-1, weights='distance', metric='cosine')
+        neigh.fit(x_train, y_train)
+        predicted_costs = neigh.predict(off_new)
+        for indi, objective_pred in zip(offspring, predicted_costs):
+            indi.objectives_predict[0] = objective_pred[0]
+            indi.objectives_predict[1] = objective_pred[1]
             indi.objectives[0] = indi.objectives_predict[0]
             indi.objectives[1] = indi.objectives_predict[1]
-        Paretor = fast_nondominated_sort_crowding_distance(offspring)
-        offspring = []
+#         Paretor = fast_nondominated_sort_crowding_distance(offspring)
+#         offspring = []
         offspring_nonevaluation = []
-        for front in Paretor:
-            if len(offspring) > int(2*self.pop_size):
-                offspring_nonevaluation.extend(front)
-            elif len(offspring) + len(front) <= int(2*self.pop_size):
-                offspring.extend(front)
-            else:
-                front.sort(key=lambda x: -x.crowding_distance)
-                offspring.extend(front[:int(2*self.pop_size) - len(offspring)])
-                offspring_nonevaluation.extend(front[int(2*self.pop_size) - len(offspring):])
+#         for front in Paretor:
+#             if len(offspring) > int(self.pop_size):
+#                 offspring_nonevaluation.extend(front)
+#             elif len(offspring) + len(front) <= int(self.pop_size):
+#                 offspring.extend(front)
+#             else:
+#                 front.sort(key=lambda x: -x.crowding_distance)
+#                 offspring.extend(front[:int(self.pop_size) - len(offspring)])
+#                 offspring_nonevaluation.extend(front[int(self.pop_size) - len(offspring):])
         return offspring, offspring_nonevaluation
     
+#     def select_offspring_objectives_predict_combine(self, offspring):
+#         x_train = np.array(self.x_train)
+#         y_train = np.array(self.y_train)
+#         for indi in offspring:
+#             x_new = np.array([indi.pc])
+#             indi.objectives_predict[0], indi.objectives_predict[1] = knn_predict_mean(x_train, y_train, x_new, self.neighbor_num)
+#             indi.objectives[0] = indi.objectives_predict[0]
+#             indi.objectives[1] = indi.objectives_predict[1]
+#         parents = deepcopy(self.indivs)
+#         offspring = offspring + parents
+#         Pareto = fast_nondominated_sort_crowding_distance(offspring)
+#         evaluation_indi = []
+#         no_evaluation_indi = []
+#         for front in Pareto:
+#             for indi in front:
+#                 if len(evaluation_indi) >= self.pop_size:
+#                     if indi.extractly_evaluated == False:
+#                         no_evaluation_indi.append(indi)
+#                 elif indi.extractly_evaluated == False:
+#                     evaluation_indi.append(indi)
+#         return evaluation_indi, no_evaluation_indi
+
     def select_offspring_objectives_predict_combine(self, offspring):
         x_train = np.array(self.x_train)
         y_train = np.array(self.y_train)
+        off_new = []
         for indi in offspring:
-            x_new = np.array([indi.pc])
-            indi.objectives_predict[0], indi.objectives_predict[1] = knn_predict_mean(x_train, y_train, x_new, self.neighbor_num)
+            off_new.append(indi.pc)
+        off_new = np.array(off_new)
+        neigh = KNeighborsRegressor(n_neighbors=self.neighbor_num, n_jobs=-1, weights='distance', metric='cosine')
+        neigh.fit(x_train, y_train)
+        predicted_costs = neigh.predict(off_new)
+        for indi, objective_pred in zip(offspring, predicted_costs):
+            indi.objectives_predict[0] = objective_pred[0]
+            indi.objectives_predict[1] = objective_pred[1]
             indi.objectives[0] = indi.objectives_predict[0]
             indi.objectives[1] = indi.objectives_predict[1]
         parents = deepcopy(self.indivs)
@@ -204,15 +265,13 @@ class SurrogateNSGAPopulation(Population):
         no_evaluation_indi = []
         for front in Pareto:
             for indi in front:
-                if len(evaluation_indi) >= 2*self.pop_size:
+                if len(evaluation_indi) >= self.pop_size:
                     if indi.extractly_evaluated == False:
                         no_evaluation_indi.append(indi)
                 elif indi.extractly_evaluated == False:
                     evaluation_indi.append(indi)
         return evaluation_indi, no_evaluation_indi
         
-            
-
 
     def natural_selection(self):
         natural_selection(self)
@@ -267,15 +326,13 @@ def trainSurrogateNSGAII(processing_number, indi_list,  network, vnf_list, reque
     hv.append(cal_hv_front(Pareto_front_generations[-1], np.array([1, 1])))
     print("The he 0: ", hv[-1])
     time_objective[0] = {"time": time.time() - time_start, "HV": hv[-1]}
-
-    offspring_achive = []
+#     offspring_achive = []
     for i in range(max_gen):
         if time.time() - time_start >= max_time:
             pool.close()
             break
         offspring = pop.gen_offspring(crossover_operator_list, mutation_operator_list)
-        print(len(offspring))
-#         print("The number of offspring:", len(offspring))
+        print("The number of offspring:", len(offspring))
 #         offspring_estimate = []
 #         offspring_noestimate = []
 #         for indi in offspring:
@@ -290,16 +347,16 @@ def trainSurrogateNSGAII(processing_number, indi_list,  network, vnf_list, reque
 #         for indi in offspring_achive:
 #             indi.age = indi.age + 1
 #         offspring_achive = offspring_achive + offspring
-# #         offspring_achive = offspring_noestimate
-# #         offspring_evaluation, offspring_no_evaluation = pop.select_offspring(offspring_achive)
-# #         offspring_achive = pop.remove_achive(offspring_no_evaluation)
+#         offspring_achive = offspring_noestimate
+#         offspring_evaluation, offspring_no_evaluation = pop.select_offspring(offspring_achive)
+#         offspring_achive = pop.remove_achive(offspring_no_evaluation)
 #         offspring_evaluation, offspring_nonevaluation = pop.select_offspring_objectives_predict(offspring)
 #         offspring_achive = pop.remove_achive(offspring_nonevaluation)
 #         offspring_evaluation = offspring_noestimate
         
-#         offspring_evaluation, a = pop.select_offspring_objectives_predict_combine(offspring)
+        offspring_evaluation, a = pop.select_offspring_objectives_predict_combine(offspring)
 #         offspring_evaluation, a = pop.select_offspring_objectives_predict(offspring)
-        offspring_evaluation = offspring
+#         offspring_evaluation = offspring
 #         print("Number of individual evaluations", len(offspring_evaluation))
         arg = []
         for indi in offspring_evaluation:
@@ -311,19 +368,25 @@ def trainSurrogateNSGAII(processing_number, indi_list,  network, vnf_list, reque
         extractly_objectvies_2 = []
         for indi, value in zip(offspring_evaluation, result):
             indi.objectives[0],indi.objectives[1],  indi.reject, indi.cost = value
-#             indi.extractly_evaluated = True
+            indi.extractly_evaluated = True
 #             print(indi.objectives[0], indi.objectives[1])
 #             print(indi.objectives_predict[0], indi.objectives_predict[1])
 #             print("________________________")
-#             predict_objectives_1.append(indi.objectives_predict[0])
-#             extractly_objectvies_1.append(indi.objectives[0])
-#             predict_objectives_2.append(indi.objectives_predict[1])
-#             extractly_objectvies_2.append(indi.objectives[1])
+            predict_objectives_1.append(indi.objectives_predict[0])
+            extractly_objectvies_1.append(indi.objectives[0])
+            predict_objectives_2.append(indi.objectives_predict[1])
+            extractly_objectvies_2.append(indi.objectives[1])
         
-        pop.update_train_data(offspring_evaluation)
+#         pop.update_train_data(offspring_evaluation)
 #         offspring_evaluation = offspring_evaluation + offspring_estimate
         pop.indivs.extend(offspring_evaluation)
+#         selected_indivs = pop.remove_duplicated_objective(pop.indivs)
+#         pop.indivs = selected_indivs
+#         pop.indivs.extend(offspring_evaluation)
         pop.natural_selection()
+#         for indi in pop.indivs:
+#             print(indi.objectives, indi.extractly_evaluated, indi.rank)
+#         time.sleep(3)
         Pareto_front_generations.append([indi for indi in pop.indivs if indi.rank == 0])
         hv.append(cal_hv_front(Pareto_front_generations[-1], np.array([1, 1])))
         

@@ -92,15 +92,18 @@ def trainNSGAII(processing_number, indi_list,  network, vnf_list, request_list,
         for indi, value in zip(offspring, result):
             indi.objectives[0],indi.objectives[1],  indi.reject, indi.cost = value
         pop.indivs.extend(offspring)
-        pop.natural_selection()    
+        pop.natural_selection()
+#         for indi in pop.indivs:
+#             print(indi.objectives, indi.extractly_evaluated, indi.rank)
+#         time.sleep(3)
         Pareto_front_generations.append([indi for indi in pop.indivs if indi.rank == 0])
         hv.append(cal_hv_front(Pareto_front_generations[-1], np.array([1, 1])))  
         print("The he ", i+1, ": ", hv[-1])
         time_objective[i + 1] = {"time": time.time() - time_start, "HV": hv[-1]}
-        if len(hv) > 10:
-            if hv[-1] - hv[-10] < 0.001:
-                pool.close()
-                break        
+#         if len(hv) > 10:
+#             if hv[-1] - hv[-10] < 0.001:
+#                 pool.close()
+#                 break        
     pool.close()
     return Pareto_front_generations, time_objective
 

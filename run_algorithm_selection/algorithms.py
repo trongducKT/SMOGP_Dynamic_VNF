@@ -83,8 +83,9 @@ def run_NSGAII( data_path, processing_num, indi_list, num_train,
     test_objectives_json["time_train"] = time_end - time_start
     pool.close()
     print("Gia tri mục tiêu")
-    print(cal_hv(np.array(hv_supported_objectives), np.array([1, 1])))
-    return objective_json, tree_json, test_objectives_json, NFE_generations
+    test_hv = cal_hv(np.array(hv_supported_objectives), np.array([1, 1]))
+    print(test_hv)
+    return objective_json, tree_json, test_objectives_json, NFE_generations, test_hv
 
 def run_MOEAD( data_path, processing_num, indi_list, num_train,  
                 functions, terminal_determining, terminal_ordering, terminal_choosing, 
@@ -146,6 +147,7 @@ def run_MOEAD( data_path, processing_num, indi_list, num_train,
         arg.append((indi, network, request_test, vnf_list))
     result = pool.starmap(calFitness, arg)
     test_objectives = []
+    hv_supported_objectives = []
     for value in result:
         objectives_temp= {}
         normal_reject, normal_cost, reject, cost = value
@@ -154,11 +156,15 @@ def run_MOEAD( data_path, processing_num, indi_list, num_train,
         objectives_temp["reject"] = reject
         objectives_temp["cost"] = cost
         test_objectives.append(objectives_temp)
+        hv_supported_objectives.append([normal_reject, normal_cost])
     test_objectives_json = {}
     test_objectives_json["test_result"] = test_objectives
     test_objectives_json["time_train"] = time_end - time_start
     pool.close()
-    return objective_json, tree_json, test_objectives_json, NFE_generations
+    print("Gia tri mục tiêu")
+    test_hv = cal_hv(np.array(hv_supported_objectives), np.array([1, 1]))
+    print(test_hv)
+    return objective_json, tree_json, test_objectives_json, NFE_generations, test_hv
 
     
 
@@ -186,6 +192,8 @@ def run_SurrogateNSGAII(data_path, processing_num,indi_list,  num_train,
     for request in request_list:
         if request.arrival <= num_train:
             request_train.append(request)
+#         if request.arrival <= int(num_train/2):
+#             request_train.append(request)
         else: 
             request_test.append(request)
     time_start = time.time()
@@ -239,8 +247,9 @@ def run_SurrogateNSGAII(data_path, processing_num,indi_list,  num_train,
     test_objectives_json["time_train"] = time_end - time_start
     pool.close()
     print("Giá trị mục tiêu")
-    print(cal_hv(np.array(hv_supported_objectives), np.array([1, 1])))
-    return objective_json, tree_json, test_objectives_json, NFE_generation, surrogate_objective
+    test_hv = cal_hv(np.array(hv_supported_objectives), np.array([1, 1]))
+    print(test_hv)
+    return objective_json, tree_json, test_objectives_json, NFE_generation, surrogate_objective, test_hv
 
 
 def run_SPEA( data_path, processing_num, indi_list, num_train,  

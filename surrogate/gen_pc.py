@@ -168,7 +168,7 @@ class Surrogate:
     def cal_pc(self, individual: Individual):
         # for situation in self.determining_situations:
         #     print(individual.determining_tree.GetSurrogateOutput(situation))
-        determining_pc = [ 0 if individual.determining_tree.GetSurrogateOutput(situation) <= 0 else 1 for situation in self.determining_situations]
+#         determining_pc = [ 0 if individual.determining_tree.GetSurrogateOutput(situation) <= 0 else 1 for situation in self.determining_situations]
         ordering_pc = []
         choosing_pc = []
         for i in range(self.number_situations):
@@ -186,4 +186,5 @@ class Surrogate:
             # print(ordering_rank, choosing_rank)
             ordering_pc.append(ordering_rank[ordering_index])
             choosing_pc.append(choosing_rank[choosing_index])
-        return determining_pc + ordering_pc + choosing_pc
+#         return determining_pc + ordering_pc + choosing_pc
+        return ordering_pc + choosing_pc
