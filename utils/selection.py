@@ -23,6 +23,7 @@ def fast_nondominated_sort(pop):
                     temp.append(other_individual)
         i = i + 1
         pop.ParetoFront.append(temp)
+    return pop.ParetoFront[0]
 
         
 def fast_nondominated_sort_crowding_distance(indi_list):
@@ -79,7 +80,8 @@ def crowding_operator( individual, other_individual):
         return -1
 
 def natural_selection(pop):
-    fast_nondominated_sort(pop)
+    EP = fast_nondominated_sort(pop)
+    
 #     print("Bước chọn lọc")
 #     print(len(pop.ParetoFront))
 #     for front in pop.ParetoFront:
@@ -99,3 +101,27 @@ def natural_selection(pop):
     new_fronts.append(pop.ParetoFront[front_num][0:pop.pop_size - len(new_indivs)])
     pop.ParetoFront = new_fronts
     pop.indivs = new_indivs
+
+def natural_selection_1(pop):
+    EP = fast_nondominated_sort(pop)
+    
+#     print("Bước chọn lọc")
+#     print(len(pop.ParetoFront))
+#     for front in pop.ParetoFront:
+#         print(len(front))
+    new_indivs = []
+    new_fronts = []
+    front_num = 0
+    while len(new_indivs) + len(pop.ParetoFront[front_num]) <= pop.pop_size:
+        new_indivs.extend(pop.ParetoFront[front_num])
+        new_fronts.append(pop.ParetoFront[front_num])
+        if len(new_indivs) == pop.pop_size:
+            break
+        front_num += 1
+    calculate_crowding_distance(pop.ParetoFront[front_num])
+    pop.ParetoFront[front_num].sort(key=lambda individual: individual.crowding_distance, reverse=True)
+    new_indivs.extend(pop.ParetoFront[front_num][0:pop.pop_size - len(new_indivs)])
+    new_fronts.append(pop.ParetoFront[front_num][0:pop.pop_size - len(new_indivs)])
+    pop.ParetoFront = new_fronts
+    pop.indivs = new_indivs
+    return EP

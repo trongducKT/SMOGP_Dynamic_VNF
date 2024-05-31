@@ -112,6 +112,37 @@ class SurrogateNSGAPopulation(Population):
                     pc_check.add(pc_indi_tuple)
                     offspring.append(indi)
         return offspring
+
+#     def gen_offspring(self, crossover_operator_list, mutation_operator_list):
+#         offspring = []
+#         for i in range(self.pop_size):
+#             indi1, indi2 = random.choices(self.indivs, k=2)
+#             if np.random.random() < self.crossover_rate:
+#                 for crossover_operator in crossover_operator_list:
+#                     children1, children2 = crossover_operator(indi1, indi2, self.min_height, self.max_height, self.determining_tree)
+#                     for children in [children1, children2]:
+#                         pc_indi = self.situation_surrogate.cal_pc(children)
+#                         children.pc = pc_indi
+#                         offspring.append(children)
+#             if np.random.random() < self.mutation_rate:
+#                 for mutation_operator in mutation_operator_list:
+#                     mutant1 = mutation_operator(indi1, self.functions, 
+#                                                 self.determining_terminals, self.ordering_terminals, self.choosing_terminals, 
+#                                                 self.min_height, self.max_height, self.determining_tree)
+#                     mutant2 = mutation_operator(indi2, self.functions, 
+#                                                 self.determining_terminals, self.ordering_terminals, self.choosing_terminals, 
+#                                                 self.min_height, self.max_height, self.determining_tree)
+#                     for mutant in [mutant1, mutant2]:
+#                         pc_indi = self.situation_surrogate.cal_pc(mutant)
+#                         mutant.pc = pc_indi
+#                         offspring.append(mutant)
+#             if np.random.random() < 1 - self.crossover_rate - self.mutation_rate:
+#                 indi = individual_init(self.min_height, self.max_height, self.determining_tree, self.functions,
+#                                        self.determining_terminals, self.ordering_terminals, self.choosing_terminals)
+#                 pc_indi = self.situation_surrogate.cal_pc(indi)
+#                 indi.pc = pc_indi
+#                 offspring.append(indi)
+#         return offspring
     
     def remove_duplicated_objective(self, indi_list):
         group_list = []
@@ -199,7 +230,7 @@ class SurrogateNSGAPopulation(Population):
         for indi in offspring:
             off_new.append(indi.pc)
         off_new = np.array(off_new)
-        neigh = KNeighborsRegressor(n_neighbors=self.neighbor_num, n_jobs=-1, weights='distance', metric='cosine')
+        neigh = KNeighborsRegressor(n_neighbors=self.neighbor_num, n_jobs=-1, weights='distance')
         neigh.fit(x_train, y_train)
         predicted_costs = neigh.predict(off_new)
         for indi, objective_pred in zip(offspring, predicted_costs):
@@ -250,7 +281,7 @@ class SurrogateNSGAPopulation(Population):
         for indi in offspring:
             off_new.append(indi.pc)
         off_new = np.array(off_new)
-        neigh = KNeighborsRegressor(n_neighbors=self.neighbor_num, n_jobs=-1, weights='distance', metric='cosine')
+        neigh = KNeighborsRegressor(n_neighbors=self.neighbor_num, n_jobs=-1, weights='distance')
         neigh.fit(x_train, y_train)
         predicted_costs = neigh.predict(off_new)
         for indi, objective_pred in zip(offspring, predicted_costs):
@@ -274,7 +305,8 @@ class SurrogateNSGAPopulation(Population):
         
 
     def natural_selection(self):
-        natural_selection(self)
+        EP = natural_selection_1(self)
+        return EP
     
 #     def natural_selection(self):
 #         self.cal_rank_individual()
@@ -296,7 +328,7 @@ def trainSurrogateNSGAII(processing_number, indi_list,  network, vnf_list, reque
                         crossover_operator_list, mutation_operator_list, calFitness,
                         situation_surrogate, ref_rule, neighbor_num, determining_tree, max_time):
     
-
+    EP = []
     # Return
     time_objective = {}
     Pareto_front_generations = []
@@ -321,8 +353,9 @@ def trainSurrogateNSGAII(processing_number, indi_list,  network, vnf_list, reque
         indi.extractly_evaluated = True
     pop.update_train_data(pop.indivs)
     print("Hoan thanh khoi tao")
-    pop.natural_selection()
+    non_dominated_solution = pop.natural_selection()
     Pareto_front_generations.append([indi for indi in pop.indivs if indi.rank == 0]) 
+    EP.extend(non_dominated_solution)
     hv.append(cal_hv_front(Pareto_front_generations[-1], np.array([1, 1])))
     print("The he 0: ", hv[-1])
     time_objective[0] = {"time": time.time() - time_start, "HV": hv[-1]}
@@ -354,8 +387,8 @@ def trainSurrogateNSGAII(processing_number, indi_list,  network, vnf_list, reque
 #         offspring_achive = pop.remove_achive(offspring_nonevaluation)
 #         offspring_evaluation = offspring_noestimate
         
-        offspring_evaluation, a = pop.select_offspring_objectives_predict_combine(offspring)
-#         offspring_evaluation, a = pop.select_offspring_objectives_predict(offspring)
+#         offspring_evaluation, a = pop.select_offspring_objectives_predict_combine(offspring)
+        offspring_evaluation, a = pop.select_offspring_objectives_predict(offspring)
 #         offspring_evaluation = offspring
 #         print("Number of individual evaluations", len(offspring_evaluation))
         arg = []
@@ -383,11 +416,12 @@ def trainSurrogateNSGAII(processing_number, indi_list,  network, vnf_list, reque
 #         selected_indivs = pop.remove_duplicated_objective(pop.indivs)
 #         pop.indivs = selected_indivs
 #         pop.indivs.extend(offspring_evaluation)
-        pop.natural_selection()
+        non_dominated_solution = pop.natural_selection()
 #         for indi in pop.indivs:
 #             print(indi.objectives, indi.extractly_evaluated, indi.rank)
 #         time.sleep(3)
         Pareto_front_generations.append([indi for indi in pop.indivs if indi.rank == 0])
+        EP.extend(non_dominated_solution)
         hv.append(cal_hv_front(Pareto_front_generations[-1], np.array([1, 1])))
         
         print("The he ", i+ 1, ":", hv[-1])
@@ -396,4 +430,4 @@ def trainSurrogateNSGAII(processing_number, indi_list,  network, vnf_list, reque
                                        "predict2": predict_objectives_2, "extractly2": extractly_objectvies_2}
         
     pool.close()
-    return Pareto_front_generations, time_objective, surrogate_objectives
+    return Pareto_front_generations, time_objective, surrogate_objectives, EP

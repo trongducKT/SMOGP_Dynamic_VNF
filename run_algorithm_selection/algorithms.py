@@ -85,7 +85,7 @@ def run_NSGAII( data_path, processing_num, indi_list, num_train,
     print("Gia tri mục tiêu")
     test_hv = cal_hv(np.array(hv_supported_objectives), np.array([1, 1]))
     print(test_hv)
-    return objective_json, tree_json, test_objectives_json, NFE_generations, test_hv
+    return objective_json, tree_json, test_objectives_json, NFE_generations, test_hv, time_end - time_start
 
 def run_MOEAD( data_path, processing_num, indi_list, num_train,  
                 functions, terminal_determining, terminal_ordering, terminal_choosing, 
@@ -197,7 +197,7 @@ def run_SurrogateNSGAII(data_path, processing_num,indi_list,  num_train,
         else: 
             request_test.append(request)
     time_start = time.time()
-    Pareto_front_generations, NFE_generation, surrogate_objective = trainSurrogateNSGAII(processing_num, indi_list,  network, vnf_list, request_train,
+    Pareto_front_generations, NFE_generation, surrogate_objective, EP = trainSurrogateNSGAII(processing_num, indi_list,  network, vnf_list, request_train,
                 functions, terminal_determining, terminal_ordering, terminal_choosing, 
                 pop_size, max_gen,  min_height, max_height, initialization_max_height,  
                 num_of_tour_particips, tournament_prob,crossover_rate, mutation_rate,
@@ -225,10 +225,24 @@ def run_SurrogateNSGAII(data_path, processing_num,indi_list,  num_train,
         objective_json[str(gen)] = objectives
         tree_json[str(gen)] = trees
         gen += 1
-
+    non_dominated_EP = []
+    for individual in EP:
+        individual.domination_count = 0
+        individual.dominated_solutions = []
+        for other_individual in EP:
+            if individual.dominates(other_individual):
+                individual.dominated_solutions.append(other_individual)
+            elif other_individual.dominates(individual):
+                individual.domination_count += 1
+        if individual.domination_count == 0:
+            individual.rank = 0
+            non_dominated_EP.append(individual)
+    print("So loi giai")
+    print(len(non_dominated_EP))
     pool = multiprocessing.Pool(processes=processing_num)
     arg = []
-    for indi in Pareto_front_generations[-1]:
+#     for indi in Pareto_front_generations[-1]:
+    for indi in non_dominated_EP:
         arg.append((indi, network, request_test, vnf_list))
     result = pool.starmap(calFitness, arg)
     test_objectives = []
@@ -245,11 +259,12 @@ def run_SurrogateNSGAII(data_path, processing_num,indi_list,  num_train,
     test_objectives_json = {}
     test_objectives_json["test_result"] = test_objectives
     test_objectives_json["time_train"] = time_end - time_start
+    time_train = time_end - time_start
     pool.close()
     print("Giá trị mục tiêu")
     test_hv = cal_hv(np.array(hv_supported_objectives), np.array([1, 1]))
     print(test_hv)
-    return objective_json, tree_json, test_objectives_json, NFE_generation, surrogate_objective, test_hv
+    return objective_json, tree_json, test_objectives_json, NFE_generation, surrogate_objective, test_hv, time_train
 
 
 def run_SPEA( data_path, processing_num, indi_list, num_train,  

@@ -251,10 +251,6 @@ def gen_surrogate(data_path, num_train, num_surrogate, ref_rule: Ref_Rule):
             request_test.append(request)
     
     determing_surrogate, request_surrogate, server_surrogate = store_event(indi, network, request_train, vnf_list)
-
-    print(len(request_surrogate))
-    print(len(server_surrogate))
-    print(len(determing_surrogate))
     surrogate = Surrogate(num_surrogate, ref_rule)
 
     surrogate.determining_situations = []

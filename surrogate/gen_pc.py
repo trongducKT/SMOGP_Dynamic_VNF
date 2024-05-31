@@ -132,6 +132,8 @@ class Surrogate:
         self.ordered_situations = None
         self.server_situations = None
         self.determining_situations = None
+        self.ordering_ordered_ref = None
+        self.choosing_ordered_ref = None
 
     
     def gen_situations_random(self, L_requests_num, U_requests_num, L_servers_num, U_servers_num):
@@ -164,6 +166,20 @@ class Surrogate:
             self.determining_situations.append(determining_request)
             self.ordered_situations.append(request_list)
             self.server_situations.append(server_list)
+    
+    
+    def cal_ordered_ref(self):
+        self.ordering_ordered_ref = []
+        self.choosing_ordered_ref = []
+        for i in range(self.number_situations):
+            ordering_priority_ref = [self.ref_rule.ordering_rule.GetSurrogateOutput(request) for request in self.ordered_situations[i]]
+            choosing_priority_ref = [self.ref_rule.choosing_rule.GetSurrogateOutput(server) for server in self.server_situations[i]]
+
+            ordering_rank = ranking_index(ordering_priority_ref)
+            choosing_rank = ranking_index(choosing_priority_ref)
+            self.ordering_ordered_ref.append(ordering_rank)
+            self.choosing_ordered_ref.append(choosing_rank)
+            
 
     def cal_pc(self, individual: Individual):
         # for situation in self.determining_situations:
@@ -178,13 +194,8 @@ class Surrogate:
             ordering_index = determining_priority.index(max(determining_priority))
             choosing_index = choosing_priority.index(max(choosing_priority))
 
-            ordering_priority_ref = [self.ref_rule.ordering_rule.GetSurrogateOutput(request) for request in self.ordered_situations[i]]
-            choosing_priority_ref = [self.ref_rule.choosing_rule.GetSurrogateOutput(server) for server in self.server_situations[i]]
-
-            ordering_rank = ranking_index(ordering_priority_ref)
-            choosing_rank = ranking_index(choosing_priority_ref)
             # print(ordering_rank, choosing_rank)
-            ordering_pc.append(ordering_rank[ordering_index])
-            choosing_pc.append(choosing_rank[choosing_index])
+            ordering_pc.append(self.ordering_ordered_ref[i][ordering_index])
+            choosing_pc.append(self.choosing_ordered_ref[i][choosing_index])
 #         return determining_pc + ordering_pc + choosing_pc
         return ordering_pc + choosing_pc
