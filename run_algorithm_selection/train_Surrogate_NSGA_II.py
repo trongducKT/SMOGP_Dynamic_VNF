@@ -11,25 +11,37 @@ from utils.selection import *
 import time
 from sklearn.neighbors import KNeighborsRegressor
 
+from sklearn.ensemble import RandomForestRegressor
+from sklearn.neural_network import MLPRegressor
+from sklearn.svm import SVR
+from sklearn.metrics import mean_squared_error
+import numpy as np
+import xgboost as xgb
+import lightgbm as lgb
+from sklearn.tree import DecisionTreeRegressor
+
 class SurrogateNSGAPopulation(Population):
     def __init__(self, pop_size, 
-                 functions, determining_terminals, ordering_terminals, choosing_terminals, 
-                 min_height, max_height, initialization_max_tree_height, 
-                 num_of_tour_particips, tournament_prob, crossover_rate, mutation_rate,
-                 determining_tree, 
-                 situation_surrogate: Surrogate, ref_rule: Ref_Rule, neighbor_num):
-        super().__init__(pop_size, 
-                        functions, determining_terminals, ordering_terminals, choosing_terminals, 
-                        min_height, max_height, initialization_max_tree_height, 
-                        num_of_tour_particips, tournament_prob, crossover_rate, mutation_rate,
-                        determining_tree)
+                    functions, determining_terminals, ordering_terminals, choosing_terminals, 
+                    min_height, max_height, initialization_max_tree_height, 
+                    num_of_tour_particips, tournament_prob, crossover_rate, mutation_rate,
+                    determining_tree, 
+                    situation_surrogate: Surrogate, ref_rule: Ref_Rule, neighbor_num,
+                    surrogate_model_name='KNN'): 
+            
+            super().__init__(pop_size, 
+                            functions, determining_terminals, ordering_terminals, choosing_terminals, 
+                            min_height, max_height, initialization_max_tree_height, 
+                            num_of_tour_particips, tournament_prob, crossover_rate, mutation_rate,
+                            determining_tree)
 
-        self.situation_surrogate = situation_surrogate
-        self.ref_rule = ref_rule
-        self.neighbor_num = neighbor_num
-        self.x_train = []
-        self.y_train = []
-        self.objective_check = set()
+            self.situation_surrogate = situation_surrogate
+            self.ref_rule = ref_rule
+            self.neighbor_num = neighbor_num
+            self.surrogate_model_name = surrogate_model_name # Lưu tên mô hình
+            self.x_train = []
+            self.y_train = []
+            self.objective_check = set()
 
     def random_init(self):
         curr_max_depth = self.min_height
@@ -55,10 +67,8 @@ class SurrogateNSGAPopulation(Population):
     
     def update_train_data(self, indi_list):
         for indi in indi_list:
-#             if tuple(indi.objectives) not in self.objective_check:
                 self.x_train.append(indi.pc)
                 self.y_train.append([indi.objectives[0], indi.objectives[1]])
-#                 self.objective_check.add(tuple(indi.objectives))
     
     def cal_rank_individual(self):
         fast_nondominated_sort(self)
@@ -112,37 +122,6 @@ class SurrogateNSGAPopulation(Population):
                     pc_check.add(pc_indi_tuple)
                     offspring.append(indi)
         return offspring
-
-#     def gen_offspring(self, crossover_operator_list, mutation_operator_list):
-#         offspring = []
-#         for i in range(self.pop_size):
-#             indi1, indi2 = random.choices(self.indivs, k=2)
-#             if np.random.random() < self.crossover_rate:
-#                 for crossover_operator in crossover_operator_list:
-#                     children1, children2 = crossover_operator(indi1, indi2, self.min_height, self.max_height, self.determining_tree)
-#                     for children in [children1, children2]:
-#                         pc_indi = self.situation_surrogate.cal_pc(children)
-#                         children.pc = pc_indi
-#                         offspring.append(children)
-#             if np.random.random() < self.mutation_rate:
-#                 for mutation_operator in mutation_operator_list:
-#                     mutant1 = mutation_operator(indi1, self.functions, 
-#                                                 self.determining_terminals, self.ordering_terminals, self.choosing_terminals, 
-#                                                 self.min_height, self.max_height, self.determining_tree)
-#                     mutant2 = mutation_operator(indi2, self.functions, 
-#                                                 self.determining_terminals, self.ordering_terminals, self.choosing_terminals, 
-#                                                 self.min_height, self.max_height, self.determining_tree)
-#                     for mutant in [mutant1, mutant2]:
-#                         pc_indi = self.situation_surrogate.cal_pc(mutant)
-#                         mutant.pc = pc_indi
-#                         offspring.append(mutant)
-#             if np.random.random() < 1 - self.crossover_rate - self.mutation_rate:
-#                 indi = individual_init(self.min_height, self.max_height, self.determining_tree, self.functions,
-#                                        self.determining_terminals, self.ordering_terminals, self.choosing_terminals)
-#                 pc_indi = self.situation_surrogate.cal_pc(indi)
-#                 indi.pc = pc_indi
-#                 offspring.append(indi)
-#         return offspring
     
     def remove_duplicated_objective(self, indi_list):
         group_list = []
@@ -165,154 +144,75 @@ class SurrogateNSGAPopulation(Population):
                     best_height = current_height
                     best_index = i
             selected_indivs.append(group[best_index])
-        return selected_indivs
-        
-
-    
-
-#     def select_offspring(self, offspring):
-#         # x_train = np.array([indi.pc for indi in self.indivs])
-#         # y_train = np.array([[indi.rank, indi.rank_crowding_distance] for indi in self.indivs])
-#         x_train = []
-#         y_train = []
-#         objective_check = set()
-#         for indi in self.indivs:
-#             if indi.objectives[0] == 1:
-#                 continue
-#             # if tuple(indi.objectives) not in objective_check:
-#             #     x_train.append(indi.pc)
-#             #     y_train.append([indi.rank, indi.rank_crowding_distance])
-#             #     objective_check.add(tuple(indi.objectives))
-
-#             if tuple(indi.objectives) not in objective_check:
-#                 x_train.append(indi.pc)
-#                 y_train.append([indi.objectives[0], indi.objectives[1]])
-#                 objective_check.add(tuple(indi.objectives))
-#         x_train = np.array(x_train)
-#         y_train = np.array(y_train)
-#         for indi in offspring:
-#             x_new = np.array([indi.pc])
-#             indi.rank, indi.rank_crowding_distance = knn_predict_mean(x_train, y_train, x_new, self.neighbor_num)
-#         offspring.sort(key=lambda x: (x.rank, x.rank_crowding_distance))
-#         return offspring[:int(self.pop_size/2)], offspring[int(self.pop_size/2):]
-    
-#     def select_offspring_rank(self, offspring):
-# #         x_train = np.array([indi.pc for indi in self.indivs])
-# #         y_train = np.array([[indi.rank, indi.rank_crowding_distance] for indi in self.indivs])
-#         x_train = []
-#         y_train = []
-#         objective_check = set()
-#         for indi in self.indivs:
-#             if indi.objectives[0] == 1:
-#                 continue
-#             if tuple(indi.objectives) not in objective_check:
-#                 x_train.append(indi.pc)
-#                 y_train.append([indi.rank, indi.rank_crowding_distance])
-#                 objective_check.add(tuple(indi.objectives))
-
-# #             if tuple(indi.objectives) not in objective_check:
-# #                 x_train.append(indi.pc)
-# #                 y_train.append([indi.objectives[0], indi.objectives[1]])
-# #                 objective_check.add(tuple(indi.objectives))
-#         x_train = np.array(x_train)
-#         y_train = np.array(y_train)
-#         for indi in offspring:
-#             x_new = np.array([indi.pc])
-#             indi.rank, indi.rank_crowding_distance = knn_predict_mean(x_train, y_train, x_new, self.neighbor_num)
-#         offspring.sort(key=lambda x: (x.rank, x.rank_crowding_distance))
-#         return offspring[:int(self.pop_size)], offspring[int(self.pop_size):]
-    
+        return selected_indivs 
 
     def select_offspring_objectives_predict(self, offspring):
-        x_train = np.array(self.x_train)
-        y_train = np.array(self.y_train)
-        off_new = []
-        for indi in offspring:
-            off_new.append(indi.pc)
-        off_new = np.array(off_new)
-        neigh = KNeighborsRegressor(n_neighbors=self.neighbor_num, n_jobs=-1, weights='distance')
-        neigh.fit(x_train, y_train)
-        predicted_costs = neigh.predict(off_new)
-        for indi, objective_pred in zip(offspring, predicted_costs):
-            indi.objectives_predict[0] = objective_pred[0]
-            indi.objectives_predict[1] = objective_pred[1]
-            indi.objectives[0] = indi.objectives_predict[0]
-            indi.objectives[1] = indi.objectives_predict[1]
-#         Paretor = fast_nondominated_sort_crowding_distance(offspring)
-#         offspring = []
-        offspring_nonevaluation = []
-#         for front in Paretor:
-#             if len(offspring) > int(self.pop_size):
-#                 offspring_nonevaluation.extend(front)
-#             elif len(offspring) + len(front) <= int(self.pop_size):
-#                 offspring.extend(front)
-#             else:
-#                 front.sort(key=lambda x: -x.crowding_distance)
-#                 offspring.extend(front[:int(self.pop_size) - len(offspring)])
-#                 offspring_nonevaluation.extend(front[int(self.pop_size) - len(offspring):])
-        return offspring, offspring_nonevaluation
-    
-#     def select_offspring_objectives_predict_combine(self, offspring):
-#         x_train = np.array(self.x_train)
-#         y_train = np.array(self.y_train)
-#         for indi in offspring:
-#             x_new = np.array([indi.pc])
-#             indi.objectives_predict[0], indi.objectives_predict[1] = knn_predict_mean(x_train, y_train, x_new, self.neighbor_num)
-#             indi.objectives[0] = indi.objectives_predict[0]
-#             indi.objectives[1] = indi.objectives_predict[1]
-#         parents = deepcopy(self.indivs)
-#         offspring = offspring + parents
-#         Pareto = fast_nondominated_sort_crowding_distance(offspring)
-#         evaluation_indi = []
-#         no_evaluation_indi = []
-#         for front in Pareto:
-#             for indi in front:
-#                 if len(evaluation_indi) >= self.pop_size:
-#                     if indi.extractly_evaluated == False:
-#                         no_evaluation_indi.append(indi)
-#                 elif indi.extractly_evaluated == False:
-#                     evaluation_indi.append(indi)
-#         return evaluation_indi, no_evaluation_indi
+            x_train = np.array(self.x_train)
+            y_train = np.array(self.y_train)
+            off_new = []
+            for indi in offspring:
+                off_new.append(indi.pc)
+            off_new = np.array(off_new)
+            
+            # Các mô hình đa mục tiêu (KNN, RF, MLP)
+            if self.surrogate_model_name == 'RF':
+                model = RandomForestRegressor(n_estimators=100, random_state=42, n_jobs=-1)
+                model.fit(x_train, y_train)
+                predicted_costs = model.predict(off_new)
+            elif self.surrogate_model_name == 'MLP':
+                model = MLPRegressor(hidden_layer_sizes=(100, 50), max_iter=500, activation='relu', solver='adam', random_state=42)
+                model.fit(x_train, y_train)
+                predicted_costs = model.predict(off_new)
+            elif self.surrogate_model_name == 'KNN':
+                model = KNeighborsRegressor(n_neighbors=self.neighbor_num, n_jobs=-1, weights='distance')
+                model.fit(x_train, y_train)
+                predicted_costs = model.predict(off_new)
+                
+            # Các mô hình đơn mục tiêu (SVR, XGBoost, LightGBM, Decision Tree)
+            elif self.surrogate_model_name in ['SVM', 'XGB', 'LGBM', 'DT']:
+                
+                if self.surrogate_model_name == 'SVM':
+                    model_cls = SVR
+                    params = {'kernel':'rbf', 'C':100, 'gamma':0.1}
+                elif self.surrogate_model_name == 'XGB':
+                    model_cls = xgb.XGBRegressor
+                    params = {'n_estimators': 100, 'objective': 'reg:squarederror', 'random_state': 42, 'n_jobs': -1}
+                elif self.surrogate_model_name == 'LGBM':
+                    model_cls = lgb.LGBMRegressor
+                    params = {'n_estimators': 100, 'objective': 'regression', 'random_state': 42, 'n_jobs': -1}
+                elif self.surrogate_model_name == 'DT':
+                    model_cls = DecisionTreeRegressor
+                    params = {'random_state': 42}
+                
+                # Trainning for Objective 1
+                model1 = model_cls(**params)
+                model1.fit(x_train, y_train[:, 0])
+                pred1 = model1.predict(off_new)
+                
+                # Trainning for Objective 2
+                model2 = model_cls(**params)
+                model2.fit(x_train, y_train[:, 1])
+                pred2 = model2.predict(off_new)
+                
+                predicted_costs = np.column_stack((pred1, pred2))
+                
+            else:
+                raise ValueError(f"Unknown surrogate model: {self.surrogate_model_name}")
 
-    def select_offspring_objectives_predict_combine(self, offspring):
-        x_train = np.array(self.x_train)
-        y_train = np.array(self.y_train)
-        off_new = []
-        for indi in offspring:
-            off_new.append(indi.pc)
-        off_new = np.array(off_new)
-        neigh = KNeighborsRegressor(n_neighbors=self.neighbor_num, n_jobs=-1, weights='distance')
-        neigh.fit(x_train, y_train)
-        predicted_costs = neigh.predict(off_new)
-        for indi, objective_pred in zip(offspring, predicted_costs):
-            indi.objectives_predict[0] = objective_pred[0]
-            indi.objectives_predict[1] = objective_pred[1]
-            indi.objectives[0] = indi.objectives_predict[0]
-            indi.objectives[1] = indi.objectives_predict[1]
-        parents = deepcopy(self.indivs)
-        offspring = offspring + parents
-        Pareto = fast_nondominated_sort_crowding_distance(offspring)
-        evaluation_indi = []
-        no_evaluation_indi = []
-        for front in Pareto:
-            for indi in front:
-                if len(evaluation_indi) >= self.pop_size:
-                    if indi.extractly_evaluated == False:
-                        no_evaluation_indi.append(indi)
-                elif indi.extractly_evaluated == False:
-                    evaluation_indi.append(indi)
-        return evaluation_indi, no_evaluation_indi
-        
+            # CẬP NHẬT KẾT QUẢ DỰ ĐOÁN CHUNG
+            for indi, objective_pred in zip(offspring, predicted_costs):
+                indi.objectives_predict[0] = objective_pred[0]
+                indi.objectives_predict[1] = objective_pred[1]
+                indi.objectives[0] = indi.objectives_predict[0]
+                indi.objectives[1] = indi.objectives_predict[1]
+                
+            offspring_nonevaluation = []
+            return offspring, offspring_nonevaluation
 
     def natural_selection(self):
         EP = natural_selection_1(self)
         return EP
     
-#     def natural_selection(self):
-#         self.cal_rank_individual()
-#         self.indivs.sort(key=lambda x: (x.rank, x.rank_crowding_distance))
-#         self.indivs = self.indivs[:self.pop_size]
-#         return self.indivs
 
     def remove_achive(self, offspring_achive):
         if len(offspring_achive) > self.pop_size:
@@ -324,9 +224,10 @@ class SurrogateNSGAPopulation(Population):
 def trainSurrogateNSGAII(processing_number, indi_list,  network, vnf_list, request_list,
                          functions, terminal_determining, terminal_ordering, terminal_choosing, 
                          pop_size, max_gen,  min_height, max_height, initialization_max_height,  
-                        num_of_tour_particips, tournament_prob,crossover_rate, mutation_rate,
-                        crossover_operator_list, mutation_operator_list, calFitness,
-                        situation_surrogate, ref_rule, neighbor_num, determining_tree, max_time):
+                         num_of_tour_particips, tournament_prob,crossover_rate, mutation_rate,
+                         crossover_operator_list, mutation_operator_list, calFitness,
+                         situation_surrogate, ref_rule, neighbor_num, determining_tree, max_time,
+                         surrogate_model_name='KNN'):
     
     EP = []
     # Return
@@ -340,8 +241,8 @@ def trainSurrogateNSGAII(processing_number, indi_list,  network, vnf_list, reque
                                     min_height, max_height, initialization_max_height, 
                                     num_of_tour_particips, tournament_prob, crossover_rate, mutation_rate,
                                     determining_tree, 
-                                    situation_surrogate, ref_rule, neighbor_num)
-    # pop.random_init()
+                                    situation_surrogate, ref_rule, neighbor_num,
+                                    surrogate_model_name=surrogate_model_name)
     pop.pre_indi_gen(indi_list)
     pool = multiprocessing.Pool(processes=processing_number)
     arg = []
@@ -359,38 +260,13 @@ def trainSurrogateNSGAII(processing_number, indi_list,  network, vnf_list, reque
     hv.append(cal_hv_front(Pareto_front_generations[-1], np.array([1, 1])))
     print("The he 0: ", hv[-1])
     time_objective[0] = {"time": time.time() - time_start, "HV": hv[-1]}
-#     offspring_achive = []
     for i in range(max_gen):
         if time.time() - time_start >= max_time:
             pool.close()
             break
         offspring = pop.gen_offspring(crossover_operator_list, mutation_operator_list)
         print("The number of offspring:", len(offspring))
-#         offspring_estimate = []
-#         offspring_noestimate = []
-#         for indi in offspring:
-#             objective = fitness_estimate(np.array(pop.x_train), np.array(pop.y_train), np.array([indi.pc]))
-#             if objective == None:
-#                 offspring_noestimate.append(indi)
-#             else:
-#                 indi.objectives = objective
-#                 offspring_estimate.append(indi)
-#         print("The number of evaluated offspring: ", len(offspring_noestimate))
-#         Surrogate
-#         for indi in offspring_achive:
-#             indi.age = indi.age + 1
-#         offspring_achive = offspring_achive + offspring
-#         offspring_achive = offspring_noestimate
-#         offspring_evaluation, offspring_no_evaluation = pop.select_offspring(offspring_achive)
-#         offspring_achive = pop.remove_achive(offspring_no_evaluation)
-#         offspring_evaluation, offspring_nonevaluation = pop.select_offspring_objectives_predict(offspring)
-#         offspring_achive = pop.remove_achive(offspring_nonevaluation)
-#         offspring_evaluation = offspring_noestimate
-        
-#         offspring_evaluation, a = pop.select_offspring_objectives_predict_combine(offspring)
         offspring_evaluation, a = pop.select_offspring_objectives_predict(offspring)
-#         offspring_evaluation = offspring
-#         print("Number of individual evaluations", len(offspring_evaluation))
         arg = []
         for indi in offspring_evaluation:
             arg.append((indi, network, request_list, vnf_list))
@@ -402,32 +278,25 @@ def trainSurrogateNSGAII(processing_number, indi_list,  network, vnf_list, reque
         for indi, value in zip(offspring_evaluation, result):
             indi.objectives[0],indi.objectives[1],  indi.reject, indi.cost = value
             indi.extractly_evaluated = True
-#             print(indi.objectives[0], indi.objectives[1])
-#             print(indi.objectives_predict[0], indi.objectives_predict[1])
-#             print("________________________")
             predict_objectives_1.append(indi.objectives_predict[0])
             extractly_objectvies_1.append(indi.objectives[0])
             predict_objectives_2.append(indi.objectives_predict[1])
             extractly_objectvies_2.append(indi.objectives[1])
         
-#         pop.update_train_data(offspring_evaluation)
-#         offspring_evaluation = offspring_evaluation + offspring_estimate
         pop.indivs.extend(offspring_evaluation)
-#         selected_indivs = pop.remove_duplicated_objective(pop.indivs)
-#         pop.indivs = selected_indivs
-#         pop.indivs.extend(offspring_evaluation)
         non_dominated_solution = pop.natural_selection()
-#         for indi in pop.indivs:
-#             print(indi.objectives, indi.extractly_evaluated, indi.rank)
-#         time.sleep(3)
         Pareto_front_generations.append([indi for indi in pop.indivs if indi.rank == 0])
         EP.extend(non_dominated_solution)
         hv.append(cal_hv_front(Pareto_front_generations[-1], np.array([1, 1])))
         
         print("The he ", i+ 1, ":", hv[-1])
         time_objective[i + 1] = {"time": time.time() - time_start, "HV": hv[-1]}
+
+        rmse1 = np.sqrt(mean_squared_error(extractly_objectvies_1, predict_objectives_1))
+        rmse2 = np.sqrt(mean_squared_error(extractly_objectvies_2, predict_objectives_2))
         surrogate_objectives[i + 1] = {"predict1": predict_objectives_1, "extractly1": extractly_objectvies_1,
-                                       "predict2": predict_objectives_2, "extractly2": extractly_objectvies_2}
-        
+                                         "predict2": predict_objectives_2, "extractly2": extractly_objectvies_2,
+                                         "rmse1": rmse1, "rmse2": rmse2} 
+        print(f"   RMSE Objective 1: {rmse1:.4f}, RMSE Objective 2: {rmse2:.4f}")   
     pool.close()
     return Pareto_front_generations, time_objective, surrogate_objectives, EP
