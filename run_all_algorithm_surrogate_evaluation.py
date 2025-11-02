@@ -19,7 +19,14 @@ if __name__ == '__main__':
     
     SURROGATE_MODELS = ['KNN', 'RF', 'MLP', 'SVM', 'XGB', 'LGBM', 'DT'] 
     
-    data_set = [r'data_1_9/nsf_uniform_easy_s3.json', r'data_1_9/nsf_uniform_normal_s3.json', r'data_1_9/nsf_uniform_hard_s3.json']
+#     data_set = [r'data_1_9/conus_centers_easy_s3.json', r'data_1_9/conus_centers_normal_s3.json', r'data_1_9/conus_centers_hard_s3.json', 
+#             r'data_1_9/conus_rural_easy_s3.json', r'data_1_9/conus_rural_normal_s3.json', r'data_1_9/conus_rural_hard_s3.json',
+#             r'data_1_9/conus_uniform_easy_s3.json', r'data_1_9/conus_uniform_normal_s3.json', r'data_1_9/conus_uniform_hard_s3.json',
+#             r'data_1_9/conus_urban_easy_s3.json', r'data_1_9/conus_urban_normal_s3.json', r'data_1_9/conus_urban_hard_s3.json']
+    data_set = [r'data_1_9/nsf_centers_easy_s3.json', r'data_1_9/nsf_centers_normal_s3.json', r'data_1_9/nsf_centers_hard_s3.json', 
+                r'data_1_9/nsf_rural_easy_s3.json', r'data_1_9/nsf_rural_normal_s3.json', r'data_1_9/nsf_rural_hard_s3.json',
+                r'data_1_9/nsf_uniform_easy_s3.json', r'data_1_9/nsf_uniform_normal_s3.json', r'data_1_9/nsf_uniform_hard_s3.json',
+                r'data_1_9/nsf_urban_easy_s3.json', r'data_1_9/nsf_urban_normal_s3.json', r'data_1_9/nsf_urban_hard_s3.json',]
     
     num_pro = 10
     num_train = 10
@@ -36,14 +43,22 @@ if __name__ == '__main__':
     max_time = 10000
     max_gen = 5
     
+    RESULT_CSV_FILE = 'Surrogate_Comparison_Summary.csv'
     # DANH SÁCH TOÁN TỬ
     crossover_operator_list = [crossover_branch_individual_swap, crossover_sub_tree_swap]
     mutation_operator_list = [mutation_individual_branch_replace, mutation_individual_node_replace, mutation_individual_branch_swap, mutation_value_determining]
 
+    try:
+        with open(RESULT_CSV_FILE, 'x', newline='') as f:
+            writer = csv.writer(f)
+            writer.writerow(['Data_Name', 'Surrogate_Model', 'Test_HV', 'Train_Time_s'])
+    except FileExistsError:
+        # Nếu file đã tồn tại, tiếp tục ghi vào đó
+        pass
     
     for data_path in data_set:
         print(f"\n==================== Dữ liệu: {data_path} ====================")
-        
+        data_name = data_path.split('/')[-1]
         # KHỞI TẠO CẤU TRÚC MẠNG VÀ THAM SỐ GP (KHÔNG ĐỔI GIỮA CÁC MÔ HÌNH)
         data = Read_data(data_path)
         ram_max_server, cpu_max_server, mem_max_server, sum_ram_server, sum_cpu_server, sum_mem_server, ram_max_vnf, cpu_max_vnf, mem_max_vnf, max_bandwidth = data.get_info_network()
@@ -114,6 +129,9 @@ if __name__ == '__main__':
             
             print(f"Hoàn thành {model_name}. HV Test: {test_hv_surrogate:.4f}. Time train: {time_train:.2f}s")
 
+            with open(RESULT_CSV_FILE, 'a', newline='') as f:
+                writer = csv.writer(f)
+                writer.writerow([data_name, model_name, test_hv_surrogate, time_train]) # Ghi dữ liệu
             base_name = data_path[9:-5] 
             model_suffix = "_" + model_name
             
